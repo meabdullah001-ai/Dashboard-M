@@ -7,16 +7,16 @@
 <meta name="referrer" content="no-referrer">
 <title>Manager.io Multi-Report Dashboard</title>
 <style>
-:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#172033;background:#f5f7fb;--blue:#1769c2;--line:#dce3ed;--muted:#627085;--white:#fff;--green:#16834b;--amber:#9a5a00;--red:#b42318}
-*{box-sizing:border-box}body{margin:0;padding:18px;min-width:320px}.wrap{max-width:1450px;margin:auto}.top,.panel,.report-card,.notice{background:var(--white);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px #182b4510}.top{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.icon{font-size:28px}.title{font-size:21px;font-weight:800}.subtitle,.muted{color:var(--muted);font-size:12px}.status{font-size:12px;padding:6px 10px;border-radius:20px;background:#edf2f8;color:#42526a}.status.ok{background:#e8f6ee;color:var(--green)}.status.bad{background:#fff0ef;color:var(--red)}
-.panel{padding:15px 17px;margin-top:14px}.controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px}.field label{font-weight:700;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.field input{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:inherit;background:white}.date-buttons{display:flex;gap:6px;flex-wrap:wrap}.btn,.preset{border:1px solid var(--line);background:white;color:#334155;padding:8px 12px;border-radius:7px;font-weight:700;cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn:disabled{opacity:.55;cursor:wait}.preset.active{background:#e9f2ff;color:var(--blue);border-color:#8bbcf0}.report-select{position:relative;min-width:270px}.drop-btn{width:100%;text-align:left;border:1px solid var(--line);background:white;padding:9px 11px;border-radius:7px;font:inherit;cursor:pointer}.menu{position:absolute;z-index:10;top:calc(100% + 5px);left:0;right:0;padding:8px;background:white;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px #17203322;display:none}.menu.open{display:block}.menu label{display:flex;gap:9px;align-items:center;padding:9px;border-radius:5px;cursor:pointer;font-size:13px}.menu label:hover{background:#f3f6fa}.menu-actions{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:8px 6px 2px;margin-top:4px}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px}.notice{margin-top:14px;padding:12px 15px;font-size:12px;line-height:1.5;border-color:#f0d39c;background:#fffaf0;color:#704600}.notice strong{color:#583600}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}.kpi{background:white;border:1px solid var(--line);border-radius:9px;padding:12px}.kpi .k{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase}.kpi .v{font-size:18px;font-weight:800;margin-top:4px}.reports{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:13px;margin-top:14px}.report-card{overflow:hidden}.report-head{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center}.report-head h2{margin:0;font-size:15px}.report-body{padding:13px 15px}.report-note{font-size:11px;color:var(--muted);margin:0 0 10px;line-height:1.5}.scroll{overflow:auto;max-height:520px;border:1px solid #e8edf3;border-radius:7px}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}th,td{text-align:left;padding:8px 9px;border-bottom:1px solid #edf0f4}th{position:sticky;top:0;background:#f3f6fa;color:#526175;text-transform:uppercase;font-size:10px;z-index:1}tr:last-child td{border-bottom:0}.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}.error{color:var(--red);background:#fff4f3;padding:10px;border-radius:7px;font-size:12px;white-space:pre-wrap}.foot{font-size:11px;color:var(--muted);margin:15px 2px 5px}.smallbtn{border:0;background:none;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer}.hidden{display:none!important}@media(max-width:650px){body{padding:10px}.title{font-size:18px}.panel{padding:12px}.controls>*{flex:1 1 145px}.report-select{min-width:100%}}
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#172033;background:#f5f7fb;--blue:#1769c2;--line:#dce3ed;--muted:#627085;--white:#fff;--green:#16834b;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;padding:18px;min-width:320px}.wrap{max-width:1450px;margin:auto}.top,.panel,.report-card{background:var(--white);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px #182b4510}.top{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.icon{font-size:28px}.title{font-size:21px;font-weight:800}.subtitle,.muted{color:var(--muted);font-size:12px}.status{font-size:12px;padding:6px 10px;border-radius:20px;background:#edf2f8;color:#42526a}.status.ok{background:#e8f6ee;color:var(--green)}.status.bad{background:#fff0ef;color:var(--red)}
+.panel{padding:15px 17px;margin-top:14px}.controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px}.field>label{font-weight:700;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.field input{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:inherit;background:white}.date-buttons{display:flex;gap:6px;flex-wrap:wrap}.btn,.preset{border:1px solid var(--line);background:white;color:#334155;padding:8px 12px;border-radius:7px;font-weight:700;cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn:disabled{opacity:.55;cursor:wait}.preset.active{background:#e9f2ff;color:var(--blue);border-color:#8bbcf0}.report-select{position:relative;min-width:270px}.drop-btn{width:100%;text-align:left;border:1px solid var(--line);background:white;padding:9px 11px;border-radius:7px;font:inherit;cursor:pointer}.menu{position:absolute;z-index:10;top:calc(100% + 5px);left:0;right:0;padding:8px;background:white;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px #17203322;display:none}.menu.open{display:block}.menu label{display:flex;gap:9px;align-items:center;padding:9px;border-radius:5px;cursor:pointer;font-size:13px}.menu label:hover{background:#f3f6fa}.menu-actions{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:8px 6px 2px;margin-top:4px}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px}.reports{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:13px;margin-top:14px}.report-card{overflow:hidden}.report-head{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center}.report-head h2{margin:0;font-size:15px}.report-body{padding:13px 15px}.report-note{font-size:11px;color:var(--muted);margin:0 0 10px;line-height:1.5}.scroll{overflow:auto;max-height:560px;border:1px solid #e8edf3;border-radius:7px}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}th,td{text-align:left;padding:8px 9px;border-bottom:1px solid #edf0f4}th{position:sticky;top:0;background:#f3f6fa;color:#526175;text-transform:uppercase;font-size:10px;z-index:1}tr:last-child td{border-bottom:0}.num{text-align:right;font-variant-numeric:tabular-nums}.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}.error{color:var(--red);background:#fff4f3;padding:10px;border-radius:7px;font-size:12px;white-space:pre-wrap}.foot{font-size:11px;color:var(--muted);margin:15px 2px 5px}.smallbtn{border:0;background:none;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer}.tag{display:inline-block;padding:2px 7px;border-radius:10px;background:#eff6ff;color:#1e5ba6;font-size:10px;font-weight:700}.hidden{display:none!important}@media(max-width:650px){body{padding:10px}.title{font-size:18px}.panel{padding:12px}.controls>*{flex:1 1 145px}.report-select{min-width:100%}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
     <div class="brand"><div class="icon">📊</div><div><div class="title">Manager.io Multi-Report Dashboard</div><div class="subtitle">Read-only reports · multi-report selection · date filters</div></div></div>
-    <span class="status" id="connection">Checking Manager.io connection…</span>
+    <span class="status" id="connection">Open this extension inside Manager.io</span>
   </header>
   <section class="panel">
     <div class="controls">
@@ -24,7 +24,7 @@
         <label>Reports (choose one or more)</label>
         <button class="drop-btn" id="reportDrop" type="button" aria-expanded="false">5 reports selected ▾</button>
         <div class="menu" id="reportMenu">
-          <label><input type="checkbox" value="cash" checked> Bank &amp; cash balances / activity</label>
+          <label><input type="checkbox" value="cash" checked> Bank &amp; cash balances</label>
           <label><input type="checkbox" value="customers" checked> Customer sales, receipts &amp; balances</label>
           <label><input type="checkbox" value="inventoryMoves" checked> Inventory in &amp; out</label>
           <label><input type="checkbox" value="inventoryOnHand" checked> Inventory on hand &amp; locations</label>
@@ -40,136 +40,189 @@
       <button class="btn primary" id="loadBtn" type="button">Load selected reports</button>
       <button class="btn" id="clearDates" type="button">Clear dates</button>
     </div>
-    <div class="hint">Choose one or several reports, then load. Date filters apply to dated transactions; point-in-time balances and stock-on-hand are snapshots and may not change with the selected date range.</div>
+    <div class="hint">Date filters apply to dated transactions. Current account and customer balances and on-hand quantities are current snapshots.</div>
   </section>
-  <div class="notice"><strong>Important access-control note:</strong> this extension can hide report panels in its own interface, but it cannot securely identify the signed-in Manager.io user or enforce per-user report permissions by itself. Use Manager.io’s native <em>Settings → User Permissions</em> to limit users’ access to the underlying tabs/reports. Do not treat client-side JavaScript or a local browser setting as a security boundary.</div>
-  <div id="summary"></div>
-  <main class="reports" id="reports"><div class="empty">Load reports from inside Manager.io to begin.</div></main>
-  <div class="foot">The extension makes GET-only requests through the Manager.io iframe bridge. No records are created, edited, or deleted. Check report totals against Manager.io’s own reports before relying on them.</div>
+  <main class="reports" id="reports"><div class="empty">Select reports and load them from inside Manager.io.</div></main>
+  <div class="foot">Read-only GET requests through Manager.io’s extension API. This dashboard does not create, edit, or delete records.</div>
 </div>
 <script>
 'use strict';
-// Manager.io's iframe bridge. Keep the allowlist explicit and GET-only.
-const ALLOWED = [
-  '/api4/bank-account-summary-view', '/api4/sales-invoice-totals-by-customer-view',
-  '/api4/inventory-quantity-summary-view', '/api4/sales-invoice-batch',
-  '/api4/receipt-batch', '/api4/payment-batch', '/api4/expense-claim-batch',
-  '/api4/inventory-transfer-batch', '/api4/inventory-write-off-batch',
-  '/api4/goods-receipt-batch', '/api4/delivery-note-batch'
+// Exact GET allowlist for the Manager.io APIs used below (API2 list routes are
+// read-only fallback sources for Manager's computed tab columns).
+const ALLOWED=[
+ '/api4/bank-or-cash-accounts','/api2/bank-and-cash-accounts',
+ '/api2/customers','/api2/inventory-items',
+ '/api4/sales-invoice-batch','/api4/receipt-batch','/api4/payment-batch',
+ '/api4/expense-claim-batch','/api4/goods-receipt-batch','/api4/delivery-note-batch',
+ '/api4/inventory-transfer-batch','/api4/inventory-write-off-batch','/api4/purchase-invoice-batch',
+ '/api4/inventory-quantity-by-location-view','/api4/inventory-quantity-by-location-batch',
+ '/api4/inventory-quantity-summary-view','/api4/inventory-quantity-summary-batch','/api4/inventory-items','/api4/customers',
+ '/api4/inventory-item-batch','/api4/non-inventory-item-batch','/api4/inventory-kit-batch',
+ '/api4/custom-inventory-location-batch','/api4/customer-batch','/api4/supplier-batch',
+ '/api4/employee-batch','/api4/profit-and-loss-statement-account-batch','/api4/balance-sheet-account-batch',
+ '/api4/bank-or-cash-account-batch','/api4/businesses'
 ];
-let managerOrigin = null;
-const PAGE_SIZE = 500;
-const reportSettings = {
-  cash: {title:'Bank & cash balances / activity', note:'Uses Manager.io’s bank-account summary view when available, plus receipt/payment activity for the chosen date range. The view is a point-in-time report; activity is not a substitute for a reconciled balance.', endpoints:[['Bank-account summary','/api4/bank-account-summary-view','view'],['Receipts','/api4/receipt-batch','batch'],['Payments','/api4/payment-batch','batch']]},
-  customers: {title:'Customer sales, receipts & balances', note:'Loads Manager.io’s customer sales totals view and sales/receipt records. Customer-level balances come from the report view when Manager.io returns them; raw invoice/receipt records are shown as supporting detail.', endpoints:[['Sales totals by customer','/api4/sales-invoice-totals-by-customer-view','view'],['Sales invoices','/api4/sales-invoice-batch','batch'],['Receipts','/api4/receipt-batch','batch']]},
-  inventoryMoves: {title:'Inventory in & out', note:'Shows inventory-related receipts, deliveries, transfers and write-offs returned by the current Manager.io API version. A movement endpoint may be unavailable in some versions or businesses; failures are shown per source.', endpoints:[['Goods receipts','/api4/goods-receipt-batch','batch'],['Delivery notes','/api4/delivery-note-batch','batch'],['Inventory transfers','/api4/inventory-transfer-batch','batch'],['Inventory write-offs','/api4/inventory-write-off-batch','batch']]},
-  inventoryOnHand: {title:'Inventory on hand & locations', note:'Uses Manager.io’s inventory quantity summary view. Stock on hand is a snapshot; the view’s location detail depends on the business configuration and Manager.io version.', endpoints:[['Inventory quantity summary','/api4/inventory-quantity-summary-view','view']]},
-  expenses: {title:'Expenses', note:'Shows expense claims and payment records for the selected dates. Payment lines may include non-expense transactions; inspect line descriptions/accounts and compare to the Profit and Loss report.', endpoints:[['Expense claims','/api4/expense-claim-batch','batch'],['Payments','/api4/payment-batch','batch']]}
+let managerOrigin=null;
+const PAGE_SIZE=500;
+const names={customer:new Map(),supplier:new Map(),employee:new Map(),item:new Map(),location:new Map(),account:new Map(),bank:new Map()};
+const reportDefs={
+ cash:{title:'Bank & cash balances'},
+ customers:{title:'Customer sales, receipts & balances'},
+ inventoryMoves:{title:'Inventory in & out'},
+ inventoryOnHand:{title:'Inventory on hand & locations'},
+ expenses:{title:'Expenses'}
 };
-const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function setConnection(ok,text){const e=document.getElementById('connection');e.textContent=text;e.className='status '+(ok?'ok':'bad')}
-function safePath(path){if(typeof path!=='string'||path.length>1800||!ALLOWED.some(p=>path===p||path.startsWith(p+'?'))||!/^[A-Za-z0-9._\-/?:=&%+,\_]+$/.test(path))throw new Error('Blocked API path: '+path);return path}
-function managerGet(path,timeoutMs=20000){
-  safePath(path);
-  if(window.parent===window) return Promise.reject(new Error('Open this page inside Manager.io → Settings → Extensions.'));
-  return new Promise((resolve,reject)=>{
-    const requestId=crypto.randomUUID();
-    const timer=setTimeout(()=>{window.removeEventListener('message',handler);reject(new Error('Manager.io did not respond. Check that the extension is installed and that your user can access the requested report.'))},timeoutMs);
-    function handler(event){
-      if(managerOrigin && event.origin!==managerOrigin) return;
-      if(event.source!==window.parent) return;
-      if(event.data?.requestId!==requestId || !String(event.data?.type||'').endsWith('-response')) return;
-      clearTimeout(timer);window.removeEventListener('message',handler);
-      if(!managerOrigin) managerOrigin=event.origin;
-      const body=event.data.body;
-      if(body?.error || body?.message && body?.status>=400) reject(new Error(body.error||body.message)); else resolve(body);
-    }
-    window.addEventListener('message',handler);
-    window.parent.postMessage({type:'api-request',method:'GET',path,requestId},'*');
-  });
+function safePath(path){if(typeof path!=='string'||path.length>1800)throw new Error('Invalid API path');const base=path.split('?')[0];if(!ALLOWED.includes(base)||!/^[A-Za-z0-9._\-/?:=&%+,]+$/.test(path))throw new Error('Blocked API path: '+path);return path}
+function managerGet(path,timeoutMs=25000){
+ safePath(path);
+ if(window.parent===window)return Promise.reject(new Error('Open this extension inside Manager.io → Settings → Extensions.'));
+ return new Promise((resolve,reject)=>{
+  const requestId=crypto.randomUUID();
+  const timer=setTimeout(()=>{window.removeEventListener('message',handler);reject(new Error('Manager.io did not respond to '+path+'. Check the extension installation and the signed-in user permissions.'))},timeoutMs);
+  function handler(event){if(managerOrigin&&event.origin!==managerOrigin)return;if(event.source!==window.parent)return;if(event.data?.requestId!==requestId||!String(event.data?.type||'').endsWith('-response'))return;clearTimeout(timer);window.removeEventListener('message',handler);if(!managerOrigin)managerOrigin=event.origin;const body=event.data.body;if(body?.error||Number(body?.status)>=400||Number(body?.statusCode)>=400)reject(new Error(body.error||body.message||('HTTP '+(body.status||body.statusCode))));else resolve(body)}
+  window.addEventListener('message',handler);window.parent.postMessage({type:'api-request',method:'GET',path,requestId},'*');
+ });
 }
-async function getBatch(endpoint){
-  const all=[];let skip=0;
-  for(let page=0;page<1000;page++){
-    const join=endpoint.includes('?')?'&':'?';
-    const body=await managerGet(endpoint+join+'PageSize='+PAGE_SIZE+'&Skip='+skip);
-    const rows=Array.isArray(body)?body:(body?.items||body?.rows||body?.data||[]);
-    if(!Array.isArray(rows)) throw new Error('Unexpected list response from '+endpoint);
-    all.push(...rows);
-    const next=body?.next_page_token||body?.nextPageToken;
-    if(next){endpoint=endpoint.split('?')[0]+'?PageSize='+PAGE_SIZE+'&next_page_token='+encodeURIComponent(next);skip=0;continue}
-    if(rows.length<PAGE_SIZE) return all;
-    skip+=rows.length;
-  }
-  throw new Error('Stopped after 1,000 pages for '+endpoint+'; narrow the date range if supported.');
+function listRows(body){if(Array.isArray(body))return body;if(!body||typeof body!=='object')return[];for(const k of ['items','rows','data','results','records'])if(Array.isArray(body[k]))return body[k];return[]}
+async function getBatch(endpoint){const all=[];let skip=0;for(let page=0;page<1000;page++){const body=await managerGet(endpoint+'?PageSize='+PAGE_SIZE+'&Skip='+skip);if(body?.error||body?.message&&body?.status)throw new Error(body.error||body.message);const rows=listRows(body);all.push(...rows);if(rows.length<PAGE_SIZE)return all;skip+=rows.length}throw new Error('Maximum page limit reached for '+endpoint)}
+async function getApi2List(endpoint,fields){const all=[];let skip=0;for(let p=0;p<1000;p++){const fieldParams=fields.map(f=>'fields='+encodeURIComponent(f)).join('&');const path=endpoint+'?'+fieldParams+'&pageSize='+PAGE_SIZE+'&skip='+skip;const body=await managerGet(path);if(body?.error||Number(body?.status)>=400)throw new Error(body.error||body.message||'Manager API request failed');const rows=listRows(body);all.push(...rows);if(rows.length<PAGE_SIZE)return all;skip+=rows.length}return all}
+async function firstSuccessful(tasks){let last;for(const task of tasks){try{const value=await task();if(value!==null&&value!==undefined)return value}catch(e){last=e}}throw last||new Error('No supported Manager.io data source returned data')}
+function obj(r){if(!r||typeof r!=='object')return{};const out={...(r.item&&typeof r.item==='object'?r.item:r)};for(const k of ['key','id','Key','ID'])if(out[k]==null&&r[k]!=null)out[k]=r[k];return out}
+function field(o,...keys){if(!o||typeof o!=='object')return undefined;const wanted=new Set(keys.map(k=>k.toLowerCase().replace(/[^a-z0-9]/g,'')));for(const [k,v] of Object.entries(o))if(wanted.has(k.toLowerCase().replace(/[^a-z0-9]/g,''))&&v!==null&&v!==undefined)return v;return undefined}
+function keyOf(v){if(v===null||v===undefined)return'';if(typeof v==='object')return String(v.key||v.Key||v.id||v.ID||v.uuid||v.UUID||'');return String(v).trim()}
+function rawName(v){if(v&&typeof v==='object')return v.name||v.Name||v.itemName||v.ItemName||v.nameWithCode||v.text||v.value||'';if(typeof v==='string'||typeof v==='number')return String(v);return''}
+function isKey(v){return /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(String(v||''))||(/^[0-9a-f]{24,}$/i.test(String(v||'')))}
+function indexCatalog(list,kind,nameKeys){for(const raw of list||[]){const outer=raw||{},r=obj(raw);const name=rawName(field(r,...nameKeys))||rawName(field(outer,...nameKeys));if(!name)continue;for(const k of [keyOf(outer),keyOf(r),String(field(r,'key','id','Key','ID')||'')].filter(Boolean))names[kind].set(k,name)}}
+function refName(value,kind='account'){const direct=rawName(value);if(direct&&!isKey(direct))return direct;const key=keyOf(value)||direct;const found=names[kind]?.get(key)||names[kind]?.get(String(key).toLowerCase());if(found)return found;if(direct&&!isKey(direct))return direct;return key&&!isKey(key)?key:'Name unavailable'}
+function numberValue(v){if(v===null||v===undefined||v==='')return null;if(typeof v==='object')v=v.value??v.amount??v.text??v.formattedValue;if(v===null||v===undefined||v==='')return null;let s=String(v).trim();const negative=/^\(.*\)$/.test(s);s=s.replace(/[(),\s]/g,'').replace(/[^0-9.\-]/g,'');if(!s||s==='-'||s==='.')return null;const n=Number(s);return Number.isFinite(n)?(negative?-Math.abs(n):n):null}
+function fmt(n){const x=numberValue(n);return x===null?'—':x.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function dateText(s){if(!s)return'—';const d=new Date(String(s).slice(0,10)+'T00:00:00');return Number.isNaN(d.getTime())?String(s):d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}
+function inRange(s){if(!s)return true;const d=String(s).slice(0,10),from=document.getElementById('fromDate').value,to=document.getElementById('toDate').value;return(!from||d>=from)&&(!to||d<=to)}
+function itemData(record){return record?.item&&typeof record.item==='object'?record.item:record||{}}
+function linesOf(record){const x=itemData(record);return Array.isArray(x.lines)?x.lines:[]}
+function amountFromLine(line,unitPriceKey='salesUnitPrice'){
+ const exact=numberValue(field(line,'total'));if(exact!==null)return exact;
+ const before=numberValue(field(line,'totalBeforeTax'));const tax=numberValue(field(line,'taxAmount'))||0;if(before!==null)return before+tax;
+ const amount=numberValue(field(line,'amount','currencyAmount'));if(amount!==null)return amount;
+ const qty=numberValue(field(line,'qty','quantity'))||0,price=numberValue(field(line,unitPriceKey,'unitPrice','salesUnitPrice','purchaseUnitPrice'))||0,disc=numberValue(field(line,'discountAmount'))||0;return qty*price-disc;
 }
-function recordDate(r){const x=r?.item||r||{};for(const k of ['date','issueDate','deliveryDate','receiptDate','dateIssued','transactionDate','fromDate'])if(x[k])return String(x[k]).slice(0,10);return ''}
-function dateAllowed(r){const d=recordDate(r),a=document.getElementById('fromDate').value,b=document.getElementById('toDate').value;if(!d)return true;return (!a||d>=a)&&(!b||d<=b)}
-function extractRows(data){
-  if(Array.isArray(data))return data;
-  if(!data||typeof data!=='object')return [];
-  for(const k of ['items','rows','results','data','records'])if(Array.isArray(data[k]))return data[k];
-  // Some report views wrap tabular results in one nested object.
-  for(const v of Object.values(data))if(Array.isArray(v)&&v.length&&typeof v[0]==='object')return v;
-  return [data];
+function convertedTotal(record,total){const x=itemData(record),rate=numberValue(field(x,'exchangeRate'));if(rate&&rate!==1)return field(x,'exchangeRateIsInverse')?total/rate:total*rate;return total}
+function invoiceAmount(record){const ls=linesOf(record);if(!ls.length)return numberValue(field(itemData(record),'invoiceAmount','total','amount'))||0;return convertedTotal(record,ls.reduce((s,l)=>s+amountFromLine(l),0))}
+function receiptAmount(record){const ls=linesOf(record);let total=ls.reduce((s,l)=>s+amountFromLine(l,'salesUnitPrice'),0);if(!total)total=numberValue(field(itemData(record),'fixedTotalAmount','balancingAmount','total','amount'))||0;return convertedTotal(record,total)}
+function showEmpty(msg){return'<div class="empty">'+esc(msg)+'</div>'}
+function renderTable(headers,rows,opts={}){if(!rows.length)return showEmpty(opts.empty||'No data returned for the selected dates.');const head='<tr>'+headers.map(h=>'<th class="'+(h.num?'num':'')+'">'+esc(h.label)+'</th>').join('')+'</tr>';const body=rows.map(r=>'<tr>'+headers.map(h=>'<td class="'+(h.num?'num':'')+'">'+esc(h.render?h.render(r):(r[h.key]??'—'))+'</td>').join('')+'</tr>').join('');return'<div class="scroll"><table><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'}
+function box(title,inner,note=''){return'<section class="report-card"><div class="report-head"><h2>'+esc(title)+'</h2></div><div class="report-body">'+(note?'<p class="report-note">'+esc(note)+'</p>':'')+inner+'</div></section>'}
+function reportError(title,e){return box(title,'<div class="error">'+esc(e?.message||e)+'</div>')}
+async function loadNameCatalogs(){
+ const jobs=[
+  ['/api4/customer-batch','customer',['name','nameWithCode','text']],
+  ['/api4/supplier-batch','supplier',['name','nameWithCode','text']],
+  ['/api4/employee-batch','employee',['name','nameWithCode','text']],
+  ['/api4/inventory-item-batch','item',['itemName','name','nameWithCode']],
+  ['/api4/non-inventory-item-batch','item',['name','itemName','nameWithCode']],
+  ['/api4/inventory-kit-batch','item',['name','itemName','nameWithCode']],
+  ['/api4/custom-inventory-location-batch','location',['name','nameWithCode','text']],
+  ['/api4/profit-and-loss-statement-account-batch','account',['name','nameWithCode','text']],
+  ['/api4/balance-sheet-account-batch','account',['name','nameWithCode','text']],
+  ['/api4/bank-or-cash-account-batch','bank',['name','nameWithCode','text']]
+ ];
+ await Promise.all(jobs.map(async([path,kind,fields])=>{try{const list=await getBatch(path);indexCatalog(list,kind,fields)}catch(_){/* optional catalog: report still renders without leaking raw keys */}}));
 }
-function unwrap(r){return (r&&typeof r==='object'&&r.item&&typeof r.item==='object')?{...r.item,_key:r.key||r.item.key||r.item.id}:r}
-function valueFrom(o,keys){for(const k of keys){const v=o?.[k];if(v!==undefined&&v!==null&&typeof v!=='object'&&String(v)!=='')return v}return ''}
-function rowText(o,keys){for(const k of keys){const v=o?.[k];if(typeof v==='string'||typeof v==='number')return v;if(v&&typeof v==='object')return v.name||v.text||v.key||v.id||''}return ''}
-function amountFrom(o){const v=valueFrom(o,['balance','balanceDue','totalAmountInBaseCurrency','total','amount','value','qty','quantity','debit','credit']);if(v!==''&&Number.isFinite(Number(v)))return Number(v);if(Array.isArray(o?.lines))return o.lines.reduce((s,l)=>s+Number(valueFrom(l,['total','amount','totalBeforeTax','qty'])||0),0);return null}
-function formatAmount(n){if(n===null||n==='')return '—';const x=Number(n);return Number.isFinite(x)?x.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):esc(n)}
-function renderTable(rows){
-  if(!rows.length)return '<div class="empty">No rows were returned for the selected dates.</div>';
-  const norm=rows.map(unwrap);
-  const headers=[['Date',['date','issueDate','deliveryDate','transactionDate']],['Reference',['reference','referenceNumber','number','_key']],['Name / party',['name','customer','supplier','payee','paidBy','itemName','description']],['Amount / balance / qty',['balance','balanceDue','totalAmountInBaseCurrency','total','amount','value','qty','quantity']],['Location',['inventoryLocation','location','fromInventoryLocation','toInventoryLocation']],['Description',['description','lineDescription','text']]];
-  const th=headers.map(h=>'<th>'+esc(h[0])+'</th>').join('');
-  const body=norm.map(o=>'<tr>'+headers.map((h,i)=>{let v=i===3?amountFrom(o):rowText(o,h[1]);if(i===0&&!v)v=recordDate(o);return '<td>'+esc(i===3?formatAmount(v):v||'—')+'</td>'}).join('')+'</tr>').join('');
-  return '<div class="scroll"><table><thead><tr>'+th+'</tr></thead><tbody>'+body+'</tbody></table></div>';
+async function loadCash(){
+ let rows=[];
+ try{const direct=listRows(await managerGet('/api4/bank-or-cash-accounts'));if(direct.some(x=>field(obj(x),'ActualBalance','actualBalance','balance')!==undefined))rows=direct}catch(_){/* use the documented computed tab list below */}
+ if(!rows.length)rows=await getApi2List('/api2/bank-and-cash-accounts',['Name','ClearedBalance','PendingDeposits','PendingWithdrawals','ActualBalance']);
+ if(!rows.length)return box(reportDefs.cash.title,showEmpty('No bank or cash accounts were returned.'));
+ return box(reportDefs.cash.title,renderTable([
+  {label:'Bank / cash account',key:'name'},
+  {label:'Actual balance',key:'actual',num:true,render:r=>fmt(r.actual)},
+  {label:'Cleared balance',key:'cleared',num:true,render:r=>fmt(r.cleared)},
+  {label:'Pending deposits',key:'deposits',num:true,render:r=>fmt(r.deposits)},
+  {label:'Pending withdrawals',key:'withdrawals',num:true,render:r=>fmt(r.withdrawals)}
+ ],rows.map(raw=>{const r=obj(raw);return{name:rawName(field(r,'Name','name','bankOrCashAccountName'))||refName(field(r,'bankOrCashAccount'),'bank'),actual:field(r,'ActualBalance','actualBalance','balance'),cleared:field(r,'ClearedBalance','clearedBalance'),deposits:field(r,'PendingDeposits','pendingDeposits'),withdrawals:field(r,'PendingWithdrawals','pendingWithdrawals')}})));
 }
-function reportKpis(reportRows){let count=0,net=0,dated=0;for(const source of reportRows){for(const raw of source.rows){const r=unwrap(raw);count++;const a=amountFrom(r);if(a!==null)net+=a;if(recordDate(r))dated++}}
-  document.getElementById('summary').innerHTML='<div class="cards"><div class="kpi"><div class="k">Rows returned</div><div class="v">'+count.toLocaleString()+'</div></div><div class="kpi"><div class="k">Dated rows</div><div class="v">'+dated.toLocaleString()+'</div></div><div class="kpi"><div class="k">Simple sum of detected amounts</div><div class="v">'+formatAmount(net)+'</div><div class="muted">Informational only; mixed currencies/accounts are not consolidated</div></div></div>';
+function customerRef(record){const x=itemData(record);return field(x,'customer','customerName','accountsReceivableCustomer','contact')||field(record,'customer')||null}
+function mapId(ref){const raw=rawName(ref);return keyOf(ref)||raw}
+function customerName(ref){const d=rawName(ref);if(d&&!isKey(d))return d;const k=mapId(ref);return names.customer.get(k)||names.customer.get(String(k).toLowerCase())||(k&&!isKey(k)?k:'Name unavailable')}
+function balanceField(record){return numberValue(field(record,'AccountsReceivable','accountsReceivable','balance','balanceDue','customerBalance'))}
+function dateOf(record){const x=itemData(record);return String(field(x,'issueDate','date','transactionDate','deliveryDate')||'').slice(0,10)}
+async function loadCustomers(){
+ const tx=await Promise.allSettled([getBatch('/api4/sales-invoice-batch'),getBatch('/api4/receipt-batch')]);const invoices=tx[0].status==='fulfilled'?tx[0].value:[];const receipts=tx[1].status==='fulfilled'?tx[1].value:[];const txErrors=[tx[0],tx[1]].filter(x=>x.status==='rejected').map(x=>x.reason?.message||'source unavailable');
+ let customerRows=[];let customerErr=null;
+ try{customerRows=await getApi2List('/api2/customers',['Name','AccountsReceivable']);if(!customerRows.length)throw new Error('Customer list returned no rows')}
+ catch(e){customerErr=e;try{customerRows=listRows(await managerGet('/api4/customers'))}catch(_){};if(!customerRows.length){try{customerRows=await getBatch('/api4/customer-batch')}catch(_) {}}}
+ indexCatalog(customerRows,'customer',['Name','name','nameWithCode','text']);
+ const balances=new Map();for(const raw of customerRows){const r=obj(raw),id=mapId(field(r,'Key','key','ID','id')||field(r,'Name','name')||raw);const b=balanceField(r);if(id&&b!==null)balances.set(id,b)}
+ const buckets=new Map();
+ function add(ref,date,which,amount){const key=mapId(ref);if(!key)return;const day=date||'';const id=key+'|'+day;let b=buckets.get(id);if(!b){b={date:day,customerRef:ref,customer:customerName(ref),sales:0,receipts:0};buckets.set(id,b)}b[which]+=amount}
+ for(const inv of invoices){const dt=dateOf(inv);if(!inRange(dt))continue;const ref=customerRef(inv);if(!ref)continue;add(ref,dt,'sales',invoiceAmount(inv))}
+ for(const rec of receipts){const dt=dateOf(rec);if(!inRange(dt))continue;const ref=customerRef(rec);if(!ref)continue;add(ref,dt,'receipts',receiptAmount(rec))}
+ // Keep each customer's current Manager balance visible even when there are no
+ // transactions in the selected date window. If list endpoint is blocked, use
+ // the complete loaded history as a clearly marked best-effort fallback.
+ if(!buckets.size||customerRows.length){for(const raw of customerRows){const r=obj(raw),ref=field(r,'Key','key','ID','id')||field(r,'Name','name')||raw,id=mapId(ref);if(!id)continue;const has=[...buckets.values()].some(x=>mapId(x.customerRef)===id);if(!has)buckets.set(id+'|',{date:'',customerRef:ref,customer:customerName(field(r,'Name','name')||ref),sales:0,receipts:0})}}
+ const historical=new Map();if(!balances.size){for(const inv of invoices){const ref=customerRef(inv),id=mapId(ref);if(id)historical.set(id,(historical.get(id)||0)+invoiceAmount(inv))}for(const rec of receipts){const ref=customerRef(rec),id=mapId(ref);if(id)historical.set(id,(historical.get(id)||0)-receiptAmount(rec))}}
+ const rows=[...buckets.values()].map(b=>{const id=mapId(b.customerRef);return{...b,customer:customerName(b.customerRef),balance:balances.has(id)?balances.get(id):(historical.has(id)?historical.get(id):null)}}).sort((a,b)=>a.customer.localeCompare(b.customer)||a.date.localeCompare(b.date));
+ const balanceNote=balances.size?'Balance is Manager.io’s current Accounts Receivable value; sales and receipts use the selected date range.':(customerErr?'Manager.io current balance list unavailable; Balance is estimated from loaded invoices less receipts.':'Balance is estimated from loaded invoices less receipts.');const note=[balanceNote,...txErrors.map(x=>'Transaction source unavailable: '+x)].join(' · ');
+ return box(reportDefs.customers.title,renderTable([
+  {label:'Date',key:'date',render:r=>r.date?dateText(r.date):'—'},
+  {label:'Customer / Name / Party',key:'customer'},
+  {label:'Sales invoices',key:'sales',num:true,render:r=>fmt(r.sales)},
+  {label:'Receipts',key:'receipts',num:true,render:r=>fmt(r.receipts)},
+  {label:'Balance',key:'balance',num:true,render:r=>r.balance===null?'—':fmt(r.balance)}
+ ],rows,{empty:'No customer sales, receipts, or balances found for the selected dates.'}),note);
 }
-async function loadReports(){
-  const selected=[...document.querySelectorAll('#reportMenu input[type=checkbox]:checked')].map(x=>x.value);
-  if(!selected.length){document.getElementById('reports').innerHTML='<div class="empty">Select at least one report.</div>';return}
-  const btn=document.getElementById('loadBtn');btn.disabled=true;btn.textContent='Loading…';setConnection(true,'Connected · read-only');
-  const reportCards=[];let summaryRows=[];
+function flattenView(view){
+ if(!view||typeof view!=='object')return null;
+ const columns=Array.isArray(view.columns)?view.columns:[];
+ const leaves=[];function walk(cs){for(const c of cs||[]){if(c.subcolumns?.length)walk(c.subcolumns);else leaves.push(c)}}walk(columns);
+ const root=view.rows?.items||view.rows?.rows||[];if(!Array.isArray(root)||!root.length)return{columns:leaves,rows:[]};
+ const rows=[];function visit(node,parent=''){for(const n of node||[]){const cells=n.cells||[];const values={};leaves.forEach((c,i)=>{const cell=cells[i];const text=cell?.text??cell?.value??'';values[c.name||c.key||('Column '+(i+1))]=typeof text==='object'?(text.text||text.name||text.value||''):text});const label=n.displayName||'';if(cells.length)rows.push({...values,_group:parent,_isTotal:!!n.isTotalRow});if(Array.isArray(n.rows))visit(n.rows,label||parent)}}visit(root);return{columns:leaves,rows};
+}
+function viewTable(view,preferred=[]){const tab=flattenView(view);if(!tab)return'';let cols=tab.columns.map(c=>({key:c.name||c.key,label:c.name||c.key||'Value'}));if(!cols.length&&tab.rows.length)cols=Object.keys(tab.rows[0]).filter(k=>!k.startsWith('_')).map(k=>({key:k,label:k}));if(preferred.length)cols=cols.filter(c=>preferred.some(p=>c.label.toLowerCase().includes(p.toLowerCase())));if(!cols.length)cols=tab.columns.map(c=>({key:c.name||c.key,label:c.name||c.key||'Value'}));return renderTable(cols.map(c=>({label:c.label,key:c.key})),tab.rows.map(r=>Object.fromEntries(cols.map(c=>[c.key,resolveCell(r[c.key])]))))}
+function resolveCell(v){if(v===null||v===undefined)return'—';if(typeof v==='string'&&isKey(v))return refName(v,'item');return String(v)}
+async function loadInventoryMoves(){
+ const specs=[['Goods receipt','/api4/goods-receipt-batch','In'],['Delivery note','/api4/delivery-note-batch','Out'],['Inventory transfer','/api4/inventory-transfer-batch','Transfer'],['Inventory write-off','/api4/inventory-write-off-batch','Out'],['Purchase invoice','/api4/purchase-invoice-batch','In'],['Sales invoice','/api4/sales-invoice-batch','Out']];
+ const settled=await Promise.all(specs.map(async([label,path,direction])=>{try{return{label,direction,records:await getBatch(path)}}catch(e){return{label,direction,error:e.message,records:[]}}}));
+ const rows=[],errs=[];for(const s of settled){if(s.error){errs.push(s.label+': '+s.error);continue}for(const rec of s.records){const h=itemData(rec),date=String(field(h,'date','issueDate','deliveryDate')||'').slice(0,10);if(!inRange(date))continue;const location=field(h,'inventoryLocation','salesInventoryLocation','location');const from=field(h,'fromInventoryLocation','fromLocation'),to=field(h,'toInventoryLocation','toLocation');for(const ln of linesOf(rec)){const ref=field(ln,'item','inventoryItem','inventoryKit');if(!ref)continue;const qty=numberValue(field(ln,'qty','quantity'));if(qty===null)continue;rows.push({date,item:refName(ref,'item'),direction:s.direction,qty:Math.abs(qty)*(s.direction==='Out'?-1:1),location:s.direction==='Transfer'?(refName(from,'location')+' → '+refName(to,'location')):refName(location,'location')})}}}
+ const inner=renderTable([{label:'Date',key:'date',render:r=>dateText(r.date)},{label:'Inventory item',key:'item'},{label:'Movement',key:'direction'},{label:'Quantity',key:'qty',num:true,render:r=>fmt(r.qty)},{label:'Location',key:'location'}],rows,{empty:'No inventory movement records were returned for these dates.'})+(errs.length?'<div class="report-note" style="margin-top:8px">Sources unavailable: '+esc(errs.join(' · '))+'</div>':'');return box(reportDefs.inventoryMoves.title,inner,'Movement rows are built from Manager.io transaction records; check whether your workflow uses invoices, goods receipts, or delivery notes so linked steps are not double-counted.');
+}
+async function loadInventoryOnHand(){
+ let viewError=null;
+ const viewPaths=['/api4/inventory-quantity-by-location-view','/api4/inventory-quantity-summary-view'];
+ for(const base of viewPaths){
   try{
-    for(const id of selected){
-      const def=reportSettings[id];const pieces=[];
-      for(const [label,path,type] of def.endpoints){
-        try{
-          let data=type==='batch'?await getBatch(path):await managerGet(path);
-          let rows=extractRows(data);
-          if(type==='batch')rows=rows.filter(dateAllowed);
-          // Preserve source name for clarity in the combined details.
-          rows=rows.map(r=>({...unwrap(r),_reportSource:label}));
-          pieces.push({label,rows});summaryRows.push(...pieces.slice(-1));
-        }catch(e){pieces.push({label,error:e.message,rows:[]})}
-      }
-      let inner='';
-      for(const p of pieces){inner+='<h3 style="font-size:12px;margin:12px 0 7px">'+esc(p.label)+(p.rows.length?' · '+p.rows.length.toLocaleString()+' rows':'')+'</h3>';
-        inner+=p.error?'<div class="error">'+esc(p.error)+'</div>':renderTable(p.rows);
-      }
-      reportCards.push('<section class="report-card"><div class="report-head"><h2>'+esc(def.title)+'</h2><span class="muted">'+pieces.reduce((n,p)=>n+p.rows.length,0).toLocaleString()+' rows</span></div><div class="report-body"><p class="report-note">'+esc(def.note)+'</p>'+inner+'</div></section>');
-    }
-    document.getElementById('reports').innerHTML=reportCards.join('');reportKpis(summaryRows);
-    setConnection(true,'Connected · reports loaded');
-  }catch(e){setConnection(false,'Load failed');document.getElementById('reports').innerHTML='<div class="error">'+esc(e.message)+'</div>'}
-  finally{btn.disabled=false;btn.textContent='Load selected reports'}
+   let view=await managerGet(base);let parsed=flattenView(view);
+   if(parsed?.rows?.length)return box(reportDefs.inventoryOnHand.title,viewTable(view),'Manager.io inventory quantity report.');
+   const configs=await getBatch(base.includes('by-location')?'/api4/inventory-quantity-by-location-batch':'/api4/inventory-quantity-summary-batch');
+   for(const c of configs.slice(0,8)){
+    const key=keyOf(c);if(!key)continue;
+    view=await managerGet(base+'?Key='+encodeURIComponent(key));parsed=flattenView(view);
+    if(parsed?.rows?.length)return box(reportDefs.inventoryOnHand.title,viewTable(view),'Manager.io inventory quantity report.');
+   }
+  }catch(e){viewError=e}
+ }
+ // Fallback to the official Inventory Items tab list with its QtyOnHand column.
+ try{const rows=await firstSuccessful([
+  async()=>{const x=await getApi2List('/api2/inventory-items',['ItemName','ItemCode','UnitName','QtyOnHand']);if(!x.length)throw new Error('Inventory Items list returned no rows');return x},
+  async()=>{const x=listRows(await managerGet('/api4/inventory-items'));if(!x.length)throw new Error('Manager API4 inventory list returned no rows');return x}
+ ]);const data=rows.map(raw=>{const r=obj(raw);return{name:rawName(field(r,'ItemName','itemName','Name','name'))||refName(field(r,'item'),'item'),code:field(r,'ItemCode','itemCode','code'),unit:field(r,'UnitName','unitName'),qty:field(r,'QtyOnHand','qtyOnHand','quantityOnHand','quantity'),location:rawName(field(r,'InventoryLocation','inventoryLocation','Location','location'))||'All locations'}});return box(reportDefs.inventoryOnHand.title,renderTable([{label:'Inventory item',key:'name'},{label:'Code',key:'code'},{label:'Unit',key:'unit'},{label:'On hand',key:'qty',num:true,render:r=>fmt(r.qty)},{label:'Location',key:'location'}],data,{empty:'Manager.io returned no inventory items.'}),viewError?'Location report unavailable; showing the Inventory Items on-hand list.':'');}catch(e){throw new Error((viewError?'Location report: '+viewError.message+'; ':'')+'Inventory item list: '+e.message)}
 }
+function accountIsProfitAndLoss(ref){const k=mapId(ref);const seen=names.account.has(k);return seen}
+async function loadExpenses(){
+ const settled=await Promise.allSettled([getBatch('/api4/payment-batch'),getBatch('/api4/expense-claim-batch')]);const payments=settled[0].status==='fulfilled'?settled[0].value:[];const claims=settled[1].status==='fulfilled'?settled[1].value:[];if(!payments.length&&!claims.length&&settled.every(x=>x.status==='rejected'))throw new Error('Neither payment nor expense-claim records could be loaded: '+settled.map(x=>x.reason?.message||'').join(' · '));const sourceErrors=settled.filter(x=>x.status==='rejected').map(x=>x.reason?.message||'source unavailable');
+ const rows=[];
+ function addExpense(record,source){const h=itemData(record),date=String(field(h,'date','issueDate')||'').slice(0,10);if(!inRange(date))return;const partyRef=field(h,'payee','paidBy','employee','supplier','contact');for(const ln of linesOf(record)){const acct=field(ln,'account','expenseAccount');if(!acct)continue;const amount=amountFromLine(ln,'purchaseUnitPrice');const account=refName(acct,'account');rows.push({date,account,party:refName(partyRef,'employee')==='Name unavailable'?refName(partyRef,'supplier'):refName(partyRef,'employee'),amount,source})}}
+ for(const p of payments)addExpense(p,'Payment');for(const c of claims)addExpense(c,'Expense claim');
+ rows.sort((a,b)=>b.date.localeCompare(a.date)||a.account.localeCompare(b.account));return box(reportDefs.expenses.title,renderTable([{label:'Date',key:'date',render:r=>dateText(r.date)},{label:'Expense account',key:'account'},{label:'Payee / party',key:'party'},{label:'Amount',key:'amount',num:true,render:r=>fmt(r.amount)}],rows,{empty:'No payment/expense-claim lines mapped to expense accounts were found.'}),'Only payment and expense-claim lines assigned to an account are shown.'+(sourceErrors.length?' Sources unavailable: '+sourceErrors.join(' · '):''));
+}
+async function loadOne(id){try{if(id==='cash')return await loadCash();if(id==='customers')return await loadCustomers();if(id==='inventoryMoves')return await loadInventoryMoves();if(id==='inventoryOnHand')return await loadInventoryOnHand();if(id==='expenses')return await loadExpenses()}catch(e){return reportError(reportDefs[id].title,e)}return''}
+async function loadReports(){const selected=[...document.querySelectorAll('#reportMenu input:checked')].map(x=>x.value);if(!selected.length){document.getElementById('reports').innerHTML=showEmpty('Select at least one report.');return}const btn=document.getElementById('loadBtn');btn.disabled=true;btn.textContent='Loading…';document.getElementById('reports').innerHTML=showEmpty('Loading Manager.io data…');setConnection(true,'Connected · loading');try{await loadNameCatalogs();const html=[];for(const id of selected)html.push(await loadOne(id));document.getElementById('reports').innerHTML=html.join('');setConnection(true,'Connected · reports loaded')}catch(e){document.getElementById('reports').innerHTML='<div class="error">'+esc(e.message)+'</div>';setConnection(false,'Load failed')}finally{btn.disabled=false;btn.textContent='Load selected reports'}}
 function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function setRange(kind){const now=new Date(),from=new Date(now),to=new Date(now);if(kind==='yesterday'){from.setDate(from.getDate()-1);to.setDate(to.getDate()-1)}else if(kind==='week'){const day=(now.getDay()+6)%7;from.setDate(now.getDate()-day)}else if(kind==='month'){from.setDate(1)}else if(kind==='all'){document.getElementById('fromDate').value='';document.getElementById('toDate').value='';}if(kind!=='all'){document.getElementById('fromDate').value=iso(from);document.getElementById('toDate').value=iso(to)}document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.range===kind))}
-const menu=document.getElementById('reportMenu'),drop=document.getElementById('reportDrop');
-drop.addEventListener('click',()=>{menu.classList.toggle('open');drop.setAttribute('aria-expanded',String(menu.classList.contains('open')))});
-document.addEventListener('click',e=>{if(!e.target.closest('.report-select'))menu.classList.remove('open')});
-document.getElementById('selectAll').addEventListener('click',()=>document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=true));
-document.getElementById('selectNone').addEventListener('click',()=>document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=false));
-document.querySelectorAll('#reportMenu input').forEach(x=>x.addEventListener('change',()=>{const n=[...document.querySelectorAll('#reportMenu input:checked')].length;drop.textContent=n?`${n} report${n===1?'':'s'} selected ▾`:'Choose reports ▾'}));
-document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>setRange(b.dataset.range)));
-document.getElementById('clearDates').addEventListener('click',()=>setRange('all'));
-document.getElementById('loadBtn').addEventListener('click',loadReports);
-setTimeout(()=>{if(window.parent===window)setConnection(false,'Standalone · open inside Manager.io')},0);
+function setRange(kind){const now=new Date(),from=new Date(now),to=new Date(now);if(kind==='yesterday'){from.setDate(from.getDate()-1);to.setDate(to.getDate()-1)}else if(kind==='week'){from.setDate(from.getDate()-(now.getDay()+6)%7)}else if(kind==='month'){from.setDate(1)}else if(kind==='all'){document.getElementById('fromDate').value='';document.getElementById('toDate').value=''}if(kind!=='all'){document.getElementById('fromDate').value=iso(from);document.getElementById('toDate').value=iso(to)}document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.range===kind))}
+const menu=document.getElementById('reportMenu'),drop=document.getElementById('reportDrop');drop.addEventListener('click',()=>{menu.classList.toggle('open');drop.setAttribute('aria-expanded',String(menu.classList.contains('open')))});document.addEventListener('click',e=>{if(!e.target.closest('.report-select'))menu.classList.remove('open')});document.getElementById('selectAll').addEventListener('click',()=>{document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=true);drop.textContent='5 reports selected ▾'});document.getElementById('selectNone').addEventListener('click',()=>{document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=false);drop.textContent='Choose reports ▾'});document.querySelectorAll('#reportMenu input').forEach(x=>x.addEventListener('change',()=>{const n=document.querySelectorAll('#reportMenu input:checked').length;drop.textContent=n?n+' report'+(n===1?'':'s')+' selected ▾':'Choose reports ▾'}));document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>setRange(b.dataset.range)));document.getElementById('clearDates').addEventListener('click',()=>setRange('all'));document.getElementById('loadBtn').addEventListener('click',loadReports);document.getElementById('fromDate').addEventListener('change',()=>document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active')));document.getElementById('toDate').addEventListener('change',()=>document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active')));
 </script>
 </body>
 </html>
