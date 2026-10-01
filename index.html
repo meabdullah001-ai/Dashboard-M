@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none';">
+<meta name="referrer" content="no-referrer">
+<title>Manager.io Multi-Report Dashboard</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#172033;background:#f5f7fb;--blue:#1769c2;--line:#dce3ed;--muted:#627085;--white:#fff;--green:#16834b;--amber:#9a5a00;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;padding:18px;min-width:320px}.wrap{max-width:1450px;margin:auto}.top,.panel,.report-card,.notice{background:var(--white);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px #182b4510}.top{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.icon{font-size:28px}.title{font-size:21px;font-weight:800}.subtitle,.muted{color:var(--muted);font-size:12px}.status{font-size:12px;padding:6px 10px;border-radius:20px;background:#edf2f8;color:#42526a}.status.ok{background:#e8f6ee;color:var(--green)}.status.bad{background:#fff0ef;color:var(--red)}
+.panel{padding:15px 17px;margin-top:14px}.controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px}.field label{font-weight:700;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.field input{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:inherit;background:white}.date-buttons{display:flex;gap:6px;flex-wrap:wrap}.btn,.preset{border:1px solid var(--line);background:white;color:#334155;padding:8px 12px;border-radius:7px;font-weight:700;cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn:disabled{opacity:.55;cursor:wait}.preset.active{background:#e9f2ff;color:var(--blue);border-color:#8bbcf0}.report-select{position:relative;min-width:270px}.drop-btn{width:100%;text-align:left;border:1px solid var(--line);background:white;padding:9px 11px;border-radius:7px;font:inherit;cursor:pointer}.menu{position:absolute;z-index:10;top:calc(100% + 5px);left:0;right:0;padding:8px;background:white;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px #17203322;display:none}.menu.open{display:block}.menu label{display:flex;gap:9px;align-items:center;padding:9px;border-radius:5px;cursor:pointer;font-size:13px}.menu label:hover{background:#f3f6fa}.menu-actions{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:8px 6px 2px;margin-top:4px}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px}.notice{margin-top:14px;padding:12px 15px;font-size:12px;line-height:1.5;border-color:#f0d39c;background:#fffaf0;color:#704600}.notice strong{color:#583600}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}.kpi{background:white;border:1px solid var(--line);border-radius:9px;padding:12px}.kpi .k{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase}.kpi .v{font-size:18px;font-weight:800;margin-top:4px}.reports{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:13px;margin-top:14px}.report-card{overflow:hidden}.report-head{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center}.report-head h2{margin:0;font-size:15px}.report-body{padding:13px 15px}.report-note{font-size:11px;color:var(--muted);margin:0 0 10px;line-height:1.5}.scroll{overflow:auto;max-height:520px;border:1px solid #e8edf3;border-radius:7px}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}th,td{text-align:left;padding:8px 9px;border-bottom:1px solid #edf0f4}th{position:sticky;top:0;background:#f3f6fa;color:#526175;text-transform:uppercase;font-size:10px;z-index:1}tr:last-child td{border-bottom:0}.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}.error{color:var(--red);background:#fff4f3;padding:10px;border-radius:7px;font-size:12px;white-space:pre-wrap}.foot{font-size:11px;color:var(--muted);margin:15px 2px 5px}.smallbtn{border:0;background:none;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer}.hidden{display:none!important}@media(max-width:650px){body{padding:10px}.title{font-size:18px}.panel{padding:12px}.controls>*{flex:1 1 145px}.report-select{min-width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="icon">📊</div><div><div class="title">Manager.io Multi-Report Dashboard</div><div class="subtitle">Read-only reports · multi-report selection · date filters</div></div></div>
+    <span class="status" id="connection">Checking Manager.io connection…</span>
+  </header>
+  <section class="panel">
+    <div class="controls">
+      <div class="field report-select">
+        <label>Reports (choose one or more)</label>
+        <button class="drop-btn" id="reportDrop" type="button" aria-expanded="false">5 reports selected ▾</button>
+        <div class="menu" id="reportMenu">
+          <label><input type="checkbox" value="cash" checked> Bank &amp; cash balances / activity</label>
+          <label><input type="checkbox" value="customers" checked> Customer sales, receipts &amp; balances</label>
+          <label><input type="checkbox" value="inventoryMoves" checked> Inventory in &amp; out</label>
+          <label><input type="checkbox" value="inventoryOnHand" checked> Inventory on hand &amp; locations</label>
+          <label><input type="checkbox" value="expenses" checked> Expenses</label>
+          <div class="menu-actions"><button class="smallbtn" id="selectAll" type="button">Select all</button><button class="smallbtn" id="selectNone" type="button">Clear</button></div>
+        </div>
+      </div>
+      <div class="field"><label>Quick date filter</label><div class="date-buttons">
+        <button class="preset" data-range="today" type="button">Today</button><button class="preset" data-range="yesterday" type="button">Yesterday</button><button class="preset" data-range="week" type="button">This week</button><button class="preset" data-range="month" type="button">This month</button><button class="preset active" data-range="all" type="button">All dates</button>
+      </div></div>
+      <div class="field"><label>From</label><input type="date" id="fromDate"></div>
+      <div class="field"><label>To</label><input type="date" id="toDate"></div>
+      <button class="btn primary" id="loadBtn" type="button">Load selected reports</button>
+      <button class="btn" id="clearDates" type="button">Clear dates</button>
+    </div>
+    <div class="hint">Choose one or several reports, then load. Date filters apply to dated transactions; point-in-time balances and stock-on-hand are snapshots and may not change with the selected date range.</div>
+  </section>
+  <div class="notice"><strong>Important access-control note:</strong> this extension can hide report panels in its own interface, but it cannot securely identify the signed-in Manager.io user or enforce per-user report permissions by itself. Use Manager.io’s native <em>Settings → User Permissions</em> to limit users’ access to the underlying tabs/reports. Do not treat client-side JavaScript or a local browser setting as a security boundary.</div>
+  <div id="summary"></div>
+  <main class="reports" id="reports"><div class="empty">Load reports from inside Manager.io to begin.</div></main>
+  <div class="foot">The extension makes GET-only requests through the Manager.io iframe bridge. No records are created, edited, or deleted. Check report totals against Manager.io’s own reports before relying on them.</div>
+</div>
+<script>
+'use strict';
+// Manager.io's iframe bridge. Keep the allowlist explicit and GET-only.
+const ALLOWED = [
+  '/api4/bank-account-summary-view', '/api4/sales-invoice-totals-by-customer-view',
+  '/api4/inventory-quantity-summary-view', '/api4/sales-invoice-batch',
+  '/api4/receipt-batch', '/api4/payment-batch', '/api4/expense-claim-batch',
+  '/api4/inventory-transfer-batch', '/api4/inventory-write-off-batch',
+  '/api4/goods-receipt-batch', '/api4/delivery-note-batch'
+];
+let managerOrigin = null;
+const PAGE_SIZE = 500;
+const reportSettings = {
+  cash: {title:'Bank & cash balances / activity', note:'Uses Manager.io’s bank-account summary view when available, plus receipt/payment activity for the chosen date range. The view is a point-in-time report; activity is not a substitute for a reconciled balance.', endpoints:[['Bank-account summary','/api4/bank-account-summary-view','view'],['Receipts','/api4/receipt-batch','batch'],['Payments','/api4/payment-batch','batch']]},
+  customers: {title:'Customer sales, receipts & balances', note:'Loads Manager.io’s customer sales totals view and sales/receipt records. Customer-level balances come from the report view when Manager.io returns them; raw invoice/receipt records are shown as supporting detail.', endpoints:[['Sales totals by customer','/api4/sales-invoice-totals-by-customer-view','view'],['Sales invoices','/api4/sales-invoice-batch','batch'],['Receipts','/api4/receipt-batch','batch']]},
+  inventoryMoves: {title:'Inventory in & out', note:'Shows inventory-related receipts, deliveries, transfers and write-offs returned by the current Manager.io API version. A movement endpoint may be unavailable in some versions or businesses; failures are shown per source.', endpoints:[['Goods receipts','/api4/goods-receipt-batch','batch'],['Delivery notes','/api4/delivery-note-batch','batch'],['Inventory transfers','/api4/inventory-transfer-batch','batch'],['Inventory write-offs','/api4/inventory-write-off-batch','batch']]},
+  inventoryOnHand: {title:'Inventory on hand & locations', note:'Uses Manager.io’s inventory quantity summary view. Stock on hand is a snapshot; the view’s location detail depends on the business configuration and Manager.io version.', endpoints:[['Inventory quantity summary','/api4/inventory-quantity-summary-view','view']]},
+  expenses: {title:'Expenses', note:'Shows expense claims and payment records for the selected dates. Payment lines may include non-expense transactions; inspect line descriptions/accounts and compare to the Profit and Loss report.', endpoints:[['Expense claims','/api4/expense-claim-batch','batch'],['Payments','/api4/payment-batch','batch']]}
+};
+const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function setConnection(ok,text){const e=document.getElementById('connection');e.textContent=text;e.className='status '+(ok?'ok':'bad')}
+function safePath(path){if(typeof path!=='string'||path.length>1800||!ALLOWED.some(p=>path===p||path.startsWith(p+'?'))||!/^[A-Za-z0-9._\-/?:=&%+,\_]+$/.test(path))throw new Error('Blocked API path: '+path);return path}
+function managerGet(path,timeoutMs=20000){
+  safePath(path);
+  if(window.parent===window) return Promise.reject(new Error('Open this page inside Manager.io → Settings → Extensions.'));
+  return new Promise((resolve,reject)=>{
+    const requestId=crypto.randomUUID();
+    const timer=setTimeout(()=>{window.removeEventListener('message',handler);reject(new Error('Manager.io did not respond. Check that the extension is installed and that your user can access the requested report.'))},timeoutMs);
+    function handler(event){
+      if(managerOrigin && event.origin!==managerOrigin) return;
+      if(event.source!==window.parent) return;
+      if(event.data?.requestId!==requestId || !String(event.data?.type||'').endsWith('-response')) return;
+      clearTimeout(timer);window.removeEventListener('message',handler);
+      if(!managerOrigin) managerOrigin=event.origin;
+      const body=event.data.body;
+      if(body?.error || body?.message && body?.status>=400) reject(new Error(body.error||body.message)); else resolve(body);
+    }
+    window.addEventListener('message',handler);
+    window.parent.postMessage({type:'api-request',method:'GET',path,requestId},'*');
+  });
+}
+async function getBatch(endpoint){
+  const all=[];let skip=0;
+  for(let page=0;page<1000;page++){
+    const join=endpoint.includes('?')?'&':'?';
+    const body=await managerGet(endpoint+join+'PageSize='+PAGE_SIZE+'&Skip='+skip);
+    const rows=Array.isArray(body)?body:(body?.items||body?.rows||body?.data||[]);
+    if(!Array.isArray(rows)) throw new Error('Unexpected list response from '+endpoint);
+    all.push(...rows);
+    const next=body?.next_page_token||body?.nextPageToken;
+    if(next){endpoint=endpoint.split('?')[0]+'?PageSize='+PAGE_SIZE+'&next_page_token='+encodeURIComponent(next);skip=0;continue}
+    if(rows.length<PAGE_SIZE) return all;
+    skip+=rows.length;
+  }
+  throw new Error('Stopped after 1,000 pages for '+endpoint+'; narrow the date range if supported.');
+}
+function recordDate(r){const x=r?.item||r||{};for(const k of ['date','issueDate','deliveryDate','receiptDate','dateIssued','transactionDate','fromDate'])if(x[k])return String(x[k]).slice(0,10);return ''}
+function dateAllowed(r){const d=recordDate(r),a=document.getElementById('fromDate').value,b=document.getElementById('toDate').value;if(!d)return true;return (!a||d>=a)&&(!b||d<=b)}
+function extractRows(data){
+  if(Array.isArray(data))return data;
+  if(!data||typeof data!=='object')return [];
+  for(const k of ['items','rows','results','data','records'])if(Array.isArray(data[k]))return data[k];
+  // Some report views wrap tabular results in one nested object.
+  for(const v of Object.values(data))if(Array.isArray(v)&&v.length&&typeof v[0]==='object')return v;
+  return [data];
+}
+function unwrap(r){return (r&&typeof r==='object'&&r.item&&typeof r.item==='object')?{...r.item,_key:r.key||r.item.key||r.item.id}:r}
+function valueFrom(o,keys){for(const k of keys){const v=o?.[k];if(v!==undefined&&v!==null&&typeof v!=='object'&&String(v)!=='')return v}return ''}
+function rowText(o,keys){for(const k of keys){const v=o?.[k];if(typeof v==='string'||typeof v==='number')return v;if(v&&typeof v==='object')return v.name||v.text||v.key||v.id||''}return ''}
+function amountFrom(o){const v=valueFrom(o,['balance','balanceDue','totalAmountInBaseCurrency','total','amount','value','qty','quantity','debit','credit']);if(v!==''&&Number.isFinite(Number(v)))return Number(v);if(Array.isArray(o?.lines))return o.lines.reduce((s,l)=>s+Number(valueFrom(l,['total','amount','totalBeforeTax','qty'])||0),0);return null}
+function formatAmount(n){if(n===null||n==='')return '—';const x=Number(n);return Number.isFinite(x)?x.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):esc(n)}
+function renderTable(rows){
+  if(!rows.length)return '<div class="empty">No rows were returned for the selected dates.</div>';
+  const norm=rows.map(unwrap);
+  const headers=[['Date',['date','issueDate','deliveryDate','transactionDate']],['Reference',['reference','referenceNumber','number','_key']],['Name / party',['name','customer','supplier','payee','paidBy','itemName','description']],['Amount / balance / qty',['balance','balanceDue','totalAmountInBaseCurrency','total','amount','value','qty','quantity']],['Location',['inventoryLocation','location','fromInventoryLocation','toInventoryLocation']],['Description',['description','lineDescription','text']]];
+  const th=headers.map(h=>'<th>'+esc(h[0])+'</th>').join('');
+  const body=norm.map(o=>'<tr>'+headers.map((h,i)=>{let v=i===3?amountFrom(o):rowText(o,h[1]);if(i===0&&!v)v=recordDate(o);return '<td>'+esc(i===3?formatAmount(v):v||'—')+'</td>'}).join('')+'</tr>').join('');
+  return '<div class="scroll"><table><thead><tr>'+th+'</tr></thead><tbody>'+body+'</tbody></table></div>';
+}
+function reportKpis(reportRows){let count=0,net=0,dated=0;for(const source of reportRows){for(const raw of source.rows){const r=unwrap(raw);count++;const a=amountFrom(r);if(a!==null)net+=a;if(recordDate(r))dated++}}
+  document.getElementById('summary').innerHTML='<div class="cards"><div class="kpi"><div class="k">Rows returned</div><div class="v">'+count.toLocaleString()+'</div></div><div class="kpi"><div class="k">Dated rows</div><div class="v">'+dated.toLocaleString()+'</div></div><div class="kpi"><div class="k">Simple sum of detected amounts</div><div class="v">'+formatAmount(net)+'</div><div class="muted">Informational only; mixed currencies/accounts are not consolidated</div></div></div>';
+}
+async function loadReports(){
+  const selected=[...document.querySelectorAll('#reportMenu input[type=checkbox]:checked')].map(x=>x.value);
+  if(!selected.length){document.getElementById('reports').innerHTML='<div class="empty">Select at least one report.</div>';return}
+  const btn=document.getElementById('loadBtn');btn.disabled=true;btn.textContent='Loading…';setConnection(true,'Connected · read-only');
+  const reportCards=[];let summaryRows=[];
+  try{
+    for(const id of selected){
+      const def=reportSettings[id];const pieces=[];
+      for(const [label,path,type] of def.endpoints){
+        try{
+          let data=type==='batch'?await getBatch(path):await managerGet(path);
+          let rows=extractRows(data);
+          if(type==='batch')rows=rows.filter(dateAllowed);
+          // Preserve source name for clarity in the combined details.
+          rows=rows.map(r=>({...unwrap(r),_reportSource:label}));
+          pieces.push({label,rows});summaryRows.push(...pieces.slice(-1));
+        }catch(e){pieces.push({label,error:e.message,rows:[]})}
+      }
+      let inner='';
+      for(const p of pieces){inner+='<h3 style="font-size:12px;margin:12px 0 7px">'+esc(p.label)+(p.rows.length?' · '+p.rows.length.toLocaleString()+' rows':'')+'</h3>';
+        inner+=p.error?'<div class="error">'+esc(p.error)+'</div>':renderTable(p.rows);
+      }
+      reportCards.push('<section class="report-card"><div class="report-head"><h2>'+esc(def.title)+'</h2><span class="muted">'+pieces.reduce((n,p)=>n+p.rows.length,0).toLocaleString()+' rows</span></div><div class="report-body"><p class="report-note">'+esc(def.note)+'</p>'+inner+'</div></section>');
+    }
+    document.getElementById('reports').innerHTML=reportCards.join('');reportKpis(summaryRows);
+    setConnection(true,'Connected · reports loaded');
+  }catch(e){setConnection(false,'Load failed');document.getElementById('reports').innerHTML='<div class="error">'+esc(e.message)+'</div>'}
+  finally{btn.disabled=false;btn.textContent='Load selected reports'}
+}
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function setRange(kind){const now=new Date(),from=new Date(now),to=new Date(now);if(kind==='yesterday'){from.setDate(from.getDate()-1);to.setDate(to.getDate()-1)}else if(kind==='week'){const day=(now.getDay()+6)%7;from.setDate(now.getDate()-day)}else if(kind==='month'){from.setDate(1)}else if(kind==='all'){document.getElementById('fromDate').value='';document.getElementById('toDate').value='';}if(kind!=='all'){document.getElementById('fromDate').value=iso(from);document.getElementById('toDate').value=iso(to)}document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.range===kind))}
+const menu=document.getElementById('reportMenu'),drop=document.getElementById('reportDrop');
+drop.addEventListener('click',()=>{menu.classList.toggle('open');drop.setAttribute('aria-expanded',String(menu.classList.contains('open')))});
+document.addEventListener('click',e=>{if(!e.target.closest('.report-select'))menu.classList.remove('open')});
+document.getElementById('selectAll').addEventListener('click',()=>document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=true));
+document.getElementById('selectNone').addEventListener('click',()=>document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=false));
+document.querySelectorAll('#reportMenu input').forEach(x=>x.addEventListener('change',()=>{const n=[...document.querySelectorAll('#reportMenu input:checked')].length;drop.textContent=n?`${n} report${n===1?'':'s'} selected ▾`:'Choose reports ▾'}));
+document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>setRange(b.dataset.range)));
+document.getElementById('clearDates').addEventListener('click',()=>setRange('all'));
+document.getElementById('loadBtn').addEventListener('click',loadReports);
+setTimeout(()=>{if(window.parent===window)setConnection(false,'Standalone · open inside Manager.io')},0);
+</script>
+</body>
+</html>
