@@ -33,14 +33,11 @@
         </div>
       </div>
       <div class="field"><label>Quick date filter</label><div class="date-buttons">
-        <button class="preset" data-range="today" type="button">Today</button><button class="preset" data-range="yesterday" type="button">Yesterday</button><button class="preset" data-range="week" type="button">This week</button><button class="preset" data-range="month" type="button">This month</button><button class="preset active" data-range="all" type="button">All dates</button>
+        <button class="preset active" data-range="today" type="button">Today</button><button class="preset" data-range="yesterday" type="button">Yesterday</button><button class="preset" data-range="week" type="button">This week</button><button class="preset" data-range="month" type="button">This month</button>
       </div></div>
-      <div class="field"><label>From</label><input type="date" id="fromDate"></div>
-      <div class="field"><label>To</label><input type="date" id="toDate"></div>
       <button class="btn primary" id="loadBtn" type="button">Load selected reports</button>
-      <button class="btn" id="clearDates" type="button">Clear dates</button>
     </div>
-    <div class="hint">Date filters apply to dated transactions. Current account and customer balances and on-hand quantities are current snapshots.</div>
+    <div class="hint">The selected preset filters dated transactions. Account balances, customer balances and on-hand quantities are current snapshots.</div>
   </section>
   <main class="reports" id="reports"><div class="empty">Select reports and load them from inside Manager.io.</div></main>
   <div class="foot">Read-only GET requests through Manager.io’s extension API. This dashboard does not create, edit, or delete records.</div>
@@ -51,7 +48,7 @@
 // read-only fallback sources for Manager's computed tab columns).
 const ALLOWED=[
  '/api4/bank-or-cash-accounts','/api2/bank-and-cash-accounts',
- '/api2/customers','/api2/inventory-items',
+ '/api2/customers','/api2/inventory-items','/api2/sales-invoices','/api2/receipts','/api2/payments',
  '/api4/sales-invoice-batch','/api4/receipt-batch','/api4/payment-batch',
  '/api4/expense-claim-batch','/api4/goods-receipt-batch','/api4/delivery-note-batch',
  '/api4/inventory-transfer-batch','/api4/inventory-write-off-batch','/api4/purchase-invoice-batch',
@@ -99,7 +96,7 @@ function refName(value,kind='account'){const direct=rawName(value);if(direct&&!i
 function numberValue(v){if(v===null||v===undefined||v==='')return null;if(typeof v==='object')v=v.value??v.amount??v.text??v.formattedValue;if(v===null||v===undefined||v==='')return null;let s=String(v).trim();const negative=/^\(.*\)$/.test(s);s=s.replace(/[(),\s]/g,'').replace(/[^0-9.\-]/g,'');if(!s||s==='-'||s==='.')return null;const n=Number(s);return Number.isFinite(n)?(negative?-Math.abs(n):n):null}
 function fmt(n){const x=numberValue(n);return x===null?'—':x.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
 function dateText(s){if(!s)return'—';const d=new Date(String(s).slice(0,10)+'T00:00:00');return Number.isNaN(d.getTime())?String(s):d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}
-function inRange(s){if(!s)return true;const d=String(s).slice(0,10),from=document.getElementById('fromDate').value,to=document.getElementById('toDate').value;return(!from||d>=from)&&(!to||d<=to)}
+function inRange(s){if(!s)return true;const d=String(s).slice(0,10),{from,to}=rangeBounds();return d>=from&&d<=to}
 function itemData(record){return record?.item&&typeof record.item==='object'?record.item:record||{}}
 function linesOf(record){const x=itemData(record);return Array.isArray(x.lines)?x.lines:[]}
 function amountFromLine(line,unitPriceKey='salesUnitPrice'){
@@ -109,7 +106,7 @@ function amountFromLine(line,unitPriceKey='salesUnitPrice'){
  const qty=numberValue(field(line,'qty','quantity'))||0,price=numberValue(field(line,unitPriceKey,'unitPrice','salesUnitPrice','purchaseUnitPrice'))||0,disc=numberValue(field(line,'discountAmount'))||0;return qty*price-disc;
 }
 function convertedTotal(record,total){const x=itemData(record),rate=numberValue(field(x,'exchangeRate'));if(rate&&rate!==1)return field(x,'exchangeRateIsInverse')?total/rate:total*rate;return total}
-function invoiceAmount(record){const ls=linesOf(record);if(!ls.length)return numberValue(field(itemData(record),'invoiceAmount','total','amount'))||0;return convertedTotal(record,ls.reduce((s,l)=>s+amountFromLine(l),0))}
+function invoiceAmount(record){const ls=linesOf(record);if(!ls.length)return numberValue(field(itemData(record),'invoiceAmount','InvoiceAmount','total','amount'))||0;return convertedTotal(record,ls.reduce((s,l)=>s+amountFromLine(l),0))}
 function receiptAmount(record){const ls=linesOf(record);let total=ls.reduce((s,l)=>s+amountFromLine(l,'salesUnitPrice'),0);if(!total)total=numberValue(field(itemData(record),'fixedTotalAmount','balancingAmount','total','amount'))||0;return convertedTotal(record,total)}
 function showEmpty(msg){return'<div class="empty">'+esc(msg)+'</div>'}
 function renderTable(headers,rows,opts={}){if(!rows.length)return showEmpty(opts.empty||'No data returned for the selected dates.');const head='<tr>'+headers.map(h=>'<th class="'+(h.num?'num':'')+'">'+esc(h.label)+'</th>').join('')+'</tr>';const body=rows.map(r=>'<tr>'+headers.map(h=>'<td class="'+(h.num?'num':'')+'">'+esc(h.render?h.render(r):(r[h.key]??'—'))+'</td>').join('')+'</tr>').join('');return'<div class="scroll"><table><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'}
@@ -131,10 +128,10 @@ async function loadNameCatalogs(){
  await Promise.all(jobs.map(async([path,kind,fields])=>{try{const list=await getBatch(path);indexCatalog(list,kind,fields)}catch(_){/* optional catalog: report still renders without leaking raw keys */}}));
 }
 async function loadCash(){
- let rows=[];
- try{const direct=listRows(await managerGet('/api4/bank-or-cash-accounts'));if(direct.some(x=>field(obj(x),'ActualBalance','actualBalance','balance')!==undefined))rows=direct}catch(_){/* use the documented computed tab list below */}
- if(!rows.length)rows=await getApi2List('/api2/bank-and-cash-accounts',['Name','ClearedBalance','PendingDeposits','PendingWithdrawals','ActualBalance']);
- if(!rows.length)return box(reportDefs.cash.title,showEmpty('No bank or cash accounts were returned.'));
+ let rows=[],api2Error=null;
+ try{rows=await getApi2List('/api2/bank-and-cash-accounts',['Name','ActualBalance','ClearedBalance','PendingDeposits','PendingWithdrawals'])}catch(e){api2Error=e}
+ if(!rows.length){try{rows=listRows(await managerGet('/api4/bank-or-cash-accounts'))}catch(e){if(!api2Error)api2Error=e}}
+ if(!rows.length){if(api2Error)throw new Error('Could not read the Bank and Cash Accounts tab: '+api2Error.message);return box(reportDefs.cash.title,showEmpty('The Bank and Cash Accounts tab returned no accounts.'))}
  return box(reportDefs.cash.title,renderTable([
   {label:'Bank / cash account',key:'name'},
   {label:'Actual balance',key:'actual',num:true,render:r=>fmt(r.actual)},
@@ -143,45 +140,66 @@ async function loadCash(){
   {label:'Pending withdrawals',key:'withdrawals',num:true,render:r=>fmt(r.withdrawals)}
  ],rows.map(raw=>{const r=obj(raw);return{name:rawName(field(r,'Name','name','bankOrCashAccountName'))||refName(field(r,'bankOrCashAccount'),'bank'),actual:field(r,'ActualBalance','actualBalance','balance'),cleared:field(r,'ClearedBalance','clearedBalance'),deposits:field(r,'PendingDeposits','pendingDeposits'),withdrawals:field(r,'PendingWithdrawals','pendingWithdrawals')}})));
 }
-function customerRef(record){const x=itemData(record);return field(x,'customer','customerName','accountsReceivableCustomer','contact')||field(record,'customer')||null}
+function customerRef(record){const x=itemData(record);return field(x,'customer','customerName','accountsReceivableCustomer','contact','paidBy')||field(record,'customer','PaidBy')||null}
 function mapId(ref){const raw=rawName(ref);return keyOf(ref)||raw}
 function customerName(ref){const d=rawName(ref);if(d&&!isKey(d))return d;const k=mapId(ref);return names.customer.get(k)||names.customer.get(String(k).toLowerCase())||(k&&!isKey(k)?k:'Name unavailable')}
 function balanceField(record){return numberValue(field(record,'AccountsReceivable','accountsReceivable','balance','balanceDue','customerBalance'))}
 function dateOf(record){const x=itemData(record);return String(field(x,'issueDate','date','transactionDate','deliveryDate')||'').slice(0,10)}
 async function loadCustomers(){
- const tx=await Promise.allSettled([getBatch('/api4/sales-invoice-batch'),getBatch('/api4/receipt-batch')]);const invoices=tx[0].status==='fulfilled'?tx[0].value:[];const receipts=tx[1].status==='fulfilled'?tx[1].value:[];const txErrors=[tx[0],tx[1]].filter(x=>x.status==='rejected').map(x=>x.reason?.message||'source unavailable');
- let customerRows=[];let customerErr=null;
- try{customerRows=await getApi2List('/api2/customers',['Name','AccountsReceivable']);if(!customerRows.length)throw new Error('Customer list returned no rows')}
- catch(e){customerErr=e;try{customerRows=listRows(await managerGet('/api4/customers'))}catch(_){};if(!customerRows.length){try{customerRows=await getBatch('/api4/customer-batch')}catch(_) {}}}
+ const settled=await Promise.allSettled([
+  getApi2List('/api2/sales-invoices',['IssueDate','Customer','InvoiceAmount']),
+  getApi2List('/api2/receipts',['Date','PaidBy','Amount']),
+  getApi2List('/api2/customers',['Name','AccountsReceivable'])
+ ]);
+ const invoices=settled[0].status==='fulfilled'?settled[0].value:[];
+ const receipts=settled[1].status==='fulfilled'?settled[1].value:[];
+ const customerRows=settled[2].status==='fulfilled'?settled[2].value:[];
+ const errors=settled.filter(x=>x.status==='rejected').map(x=>x.reason?.message||'tab unavailable');
+ if(!invoices.length&&!receipts.length&&!customerRows.length&&errors.length===3)throw new Error('Could not read Sales Invoices, Receipts or Customers tabs: '+errors.join(' · '));
  indexCatalog(customerRows,'customer',['Name','name','nameWithCode','text']);
- const balances=new Map();for(const raw of customerRows){const r=obj(raw),id=mapId(field(r,'Key','key','ID','id')||field(r,'Name','name')||raw);const b=balanceField(r);if(id&&b!==null)balances.set(id,b)}
+ const balances=new Map();
+ for(const raw of customerRows){const r=obj(raw),balance=balanceField(r);if(balance===null)continue;const id=keyOf(field(r,'Key','key','ID','id'));const name=rawName(field(r,'Name','name'));if(id)balances.set(id,balance);if(name)balances.set(name,balance)}
  const buckets=new Map();
- function add(ref,date,which,amount){const key=mapId(ref);if(!key)return;const day=date||'';const id=key+'|'+day;let b=buckets.get(id);if(!b){b={date:day,customerRef:ref,customer:customerName(ref),sales:0,receipts:0};buckets.set(id,b)}b[which]+=amount}
- for(const inv of invoices){const dt=dateOf(inv);if(!inRange(dt))continue;const ref=customerRef(inv);if(!ref)continue;add(ref,dt,'sales',invoiceAmount(inv))}
- for(const rec of receipts){const dt=dateOf(rec);if(!inRange(dt))continue;const ref=customerRef(rec);if(!ref)continue;add(ref,dt,'receipts',receiptAmount(rec))}
- // Keep each customer's current Manager balance visible even when there are no
- // transactions in the selected date window. If list endpoint is blocked, use
- // the complete loaded history as a clearly marked best-effort fallback.
- if(!buckets.size||customerRows.length){for(const raw of customerRows){const r=obj(raw),ref=field(r,'Key','key','ID','id')||field(r,'Name','name')||raw,id=mapId(ref);if(!id)continue;const has=[...buckets.values()].some(x=>mapId(x.customerRef)===id);if(!has)buckets.set(id+'|',{date:'',customerRef:ref,customer:customerName(field(r,'Name','name')||ref),sales:0,receipts:0})}}
- const historical=new Map();if(!balances.size){for(const inv of invoices){const ref=customerRef(inv),id=mapId(ref);if(id)historical.set(id,(historical.get(id)||0)+invoiceAmount(inv))}for(const rec of receipts){const ref=customerRef(rec),id=mapId(ref);if(id)historical.set(id,(historical.get(id)||0)-receiptAmount(rec))}}
- const rows=[...buckets.values()].map(b=>{const id=mapId(b.customerRef);return{...b,customer:customerName(b.customerRef),balance:balances.has(id)?balances.get(id):(historical.has(id)?historical.get(id):null)}}).sort((a,b)=>a.customer.localeCompare(b.customer)||a.date.localeCompare(b.date));
- const balanceNote=balances.size?'Balance is Manager.io’s current Accounts Receivable value; sales and receipts use the selected date range.':(customerErr?'Manager.io current balance list unavailable; Balance is estimated from loaded invoices less receipts.':'Balance is estimated from loaded invoices less receipts.');const note=[balanceNote,...txErrors.map(x=>'Transaction source unavailable: '+x)].join(' · ');
+ function add(ref,date,which,amount){const id=mapId(ref);if(!id)return;const day=date||'';const k=id+'|'+day;let b=buckets.get(k);if(!b){b={date:day,customerRef:ref,customer:customerName(ref),sales:0,receipts:0};buckets.set(k,b)}b[which]+=amount}
+ for(const inv of invoices){const dt=String(field(obj(inv),'IssueDate','issueDate')||'').slice(0,10);if(!inRange(dt))continue;const ref=field(obj(inv),'Customer','customer');if(!ref)continue;const amount=numberValue(field(obj(inv),'InvoiceAmount','invoiceAmount','amount','total'));if(amount!==null)add(ref,dt,'sales',amount)}
+ for(const rec of receipts){const dt=String(field(obj(rec),'Date','date')||'').slice(0,10);if(!inRange(dt))continue;const ref=field(obj(rec),'PaidBy','paidBy','customer');if(!ref)continue;const amount=numberValue(field(obj(rec),'Amount','amount','total'));if(amount!==null)add(ref,dt,'receipts',amount)}
+ // Keep each customer’s balance from the Customers tab visible even when the
+ // selected day has no invoice/receipt. The customer balance is a current snapshot.
+ for(const raw of customerRows){const r=obj(raw),ref=field(r,'Key','key','ID','id')||field(r,'Name','name');if(!ref)continue;const id=mapId(ref);if(![...buckets.values()].some(x=>mapId(x.customerRef)===id))buckets.set(id+'|',{date:'',customerRef:ref,customer:customerName(field(r,'Name','name')||ref),sales:0,receipts:0})}
+ const hist=new Map();if(!balances.size){for(const inv of invoices){const r=obj(inv),id=mapId(field(r,'Customer','customer')),amt=numberValue(field(r,'InvoiceAmount','invoiceAmount','amount','total'));if(id&&amt!==null)hist.set(id,(hist.get(id)||0)+amt)}for(const rec of receipts){const r=obj(rec),id=mapId(field(r,'PaidBy','paidBy','customer')),amt=numberValue(field(r,'Amount','amount','total'));if(id&&amt!==null)hist.set(id,(hist.get(id)||0)-amt)}}
+ const rows=[...buckets.values()].map(b=>{const id=mapId(b.customerRef),name=b.customer;const balance=balances.has(id)?balances.get(id):(balances.has(name)?balances.get(name):(hist.has(id)?hist.get(id):null));return{...b,customer:customerName(b.customerRef),balance}}).sort((a,b)=>a.customer.localeCompare(b.customer)||a.date.localeCompare(b.date));
+ const note=(balances.size?'Balance is taken from the Customers tab Accounts Receivable column (current balance).':'Customers tab balance was unavailable; fallback balance is estimated from invoice totals less receipts.')+(errors.length?' Some tab source(s) unavailable: '+errors.join(' · '):'');
  return box(reportDefs.customers.title,renderTable([
   {label:'Date',key:'date',render:r=>r.date?dateText(r.date):'—'},
   {label:'Customer / Name / Party',key:'customer'},
   {label:'Sales invoices',key:'sales',num:true,render:r=>fmt(r.sales)},
   {label:'Receipts',key:'receipts',num:true,render:r=>fmt(r.receipts)},
   {label:'Balance',key:'balance',num:true,render:r=>r.balance===null?'—':fmt(r.balance)}
- ],rows,{empty:'No customer sales, receipts, or balances found for the selected dates.'}),note);
+ ],rows,{empty:'No customer sales, receipts, or balances for the selected preset.'}),note);
 }
 function flattenView(view){
  if(!view||typeof view!=='object')return null;
  const columns=Array.isArray(view.columns)?view.columns:[];
  const leaves=[];function walk(cs){for(const c of cs||[]){if(c.subcolumns?.length)walk(c.subcolumns);else leaves.push(c)}}walk(columns);
  const root=view.rows?.items||view.rows?.rows||[];if(!Array.isArray(root)||!root.length)return{columns:leaves,rows:[]};
- const rows=[];function visit(node,parent=''){for(const n of node||[]){const cells=n.cells||[];const values={};leaves.forEach((c,i)=>{const cell=cells[i];const text=cell?.text??cell?.value??'';values[c.name||c.key||('Column '+(i+1))]=typeof text==='object'?(text.text||text.name||text.value||''):text});const label=n.displayName||'';if(cells.length)rows.push({...values,_group:parent,_isTotal:!!n.isTotalRow});if(Array.isArray(n.rows))visit(n.rows,label||parent)}}visit(root);return{columns:leaves,rows};
+ const rows=[];function visit(node,parent=''){for(const n of node||[]){const cells=n.cells||[];const values={};leaves.forEach((c,i)=>{const cell=cells[i];const text=cell?.text!==null&&cell?.text!==undefined&&cell.text!==''?cell.text:(cell?.value??'');values[c.name||c.key||('Column '+(i+1))]=typeof text==='object'?(text.text||text.name||text.value||''):text});const label=n.displayName||'';if(cells.length)rows.push({...values,_group:parent,_isTotal:!!n.isTotalRow});if(Array.isArray(n.rows))visit(n.rows,label||parent)}}visit(root);return{columns:leaves,rows};
 }
 function viewTable(view,preferred=[]){const tab=flattenView(view);if(!tab)return'';let cols=tab.columns.map(c=>({key:c.name||c.key,label:c.name||c.key||'Value'}));if(!cols.length&&tab.rows.length)cols=Object.keys(tab.rows[0]).filter(k=>!k.startsWith('_')).map(k=>({key:k,label:k}));if(preferred.length)cols=cols.filter(c=>preferred.some(p=>c.label.toLowerCase().includes(p.toLowerCase())));if(!cols.length)cols=tab.columns.map(c=>({key:c.name||c.key,label:c.name||c.key||'Value'}));return renderTable(cols.map(c=>({label:c.label,key:c.key})),tab.rows.map(r=>Object.fromEntries(cols.map(c=>[c.key,resolveCell(r[c.key])]))))}
+function inventoryViewTable(view){
+ const tab=flattenView(view);if(!tab)return'';
+ const itemCol=tab.columns.find(c=>/item|product/i.test(String(c.name||c.key||'')));
+ const itemKey=itemCol?(itemCol.name||itemCol.key):null;
+ const others=tab.columns.filter(c=>!itemCol||c!==itemCol);
+ const rows=tab.rows.map(r=>{
+  const converted={...r};
+  for(const c of tab.columns){const key=c.name||c.key;const val=r[key];if(/location/i.test(String(c.name||c.key||'')))converted[key]=typeof val==='string'&&isKey(val)?refName(val,'location'):resolveCell(val);else converted[key]=resolveCell(val)}
+  const raw=itemKey?r[itemKey]:Object.values(r).find(v=>typeof v==='string'&&isKey(v)&&names.item.has(v));
+  converted.__resolvedItem=raw===undefined?'Name unavailable':resolveCell(raw);
+  return converted
+ });
+ const headers=[{label:'Inventory item',key:'__resolvedItem'},...others.map(c=>({label:c.name||c.key||'Value',key:c.name||c.key}))];
+ return renderTable(headers,rows);
+}
 function resolveCell(v){if(v===null||v===undefined)return'—';if(typeof v==='string'&&isKey(v))return refName(v,'item');return String(v)}
 async function loadInventoryMoves(){
  const specs=[['Goods receipt','/api4/goods-receipt-batch','In'],['Delivery note','/api4/delivery-note-batch','Out'],['Inventory transfer','/api4/inventory-transfer-batch','Transfer'],['Inventory write-off','/api4/inventory-write-off-batch','Out'],['Purchase invoice','/api4/purchase-invoice-batch','In'],['Sales invoice','/api4/sales-invoice-batch','Out']];
@@ -191,16 +209,17 @@ async function loadInventoryMoves(){
 }
 async function loadInventoryOnHand(){
  let viewError=null;
+ try{const catalog=await getApi2List('/api2/inventory-items',['ItemName','ItemCode','UnitName','QtyOnHand']);indexCatalog(catalog,'item',['ItemName','itemName','Name','name'])}catch(_){}
  const viewPaths=['/api4/inventory-quantity-by-location-view','/api4/inventory-quantity-summary-view'];
  for(const base of viewPaths){
   try{
    let view=await managerGet(base);let parsed=flattenView(view);
-   if(parsed?.rows?.length)return box(reportDefs.inventoryOnHand.title,viewTable(view),'Manager.io inventory quantity report.');
+   if(parsed?.rows?.length)return box(reportDefs.inventoryOnHand.title,inventoryViewTable(view),'Manager.io inventory quantity report.');
    const configs=await getBatch(base.includes('by-location')?'/api4/inventory-quantity-by-location-batch':'/api4/inventory-quantity-summary-batch');
    for(const c of configs.slice(0,8)){
     const key=keyOf(c);if(!key)continue;
     view=await managerGet(base+'?Key='+encodeURIComponent(key));parsed=flattenView(view);
-    if(parsed?.rows?.length)return box(reportDefs.inventoryOnHand.title,viewTable(view),'Manager.io inventory quantity report.');
+    if(parsed?.rows?.length)return box(reportDefs.inventoryOnHand.title,inventoryViewTable(view),'Manager.io inventory quantity report.');
    }
   }catch(e){viewError=e}
  }
@@ -210,19 +229,43 @@ async function loadInventoryOnHand(){
   async()=>{const x=listRows(await managerGet('/api4/inventory-items'));if(!x.length)throw new Error('Manager API4 inventory list returned no rows');return x}
  ]);const data=rows.map(raw=>{const r=obj(raw);return{name:rawName(field(r,'ItemName','itemName','Name','name'))||refName(field(r,'item'),'item'),code:field(r,'ItemCode','itemCode','code'),unit:field(r,'UnitName','unitName'),qty:field(r,'QtyOnHand','qtyOnHand','quantityOnHand','quantity'),location:rawName(field(r,'InventoryLocation','inventoryLocation','Location','location'))||'All locations'}});return box(reportDefs.inventoryOnHand.title,renderTable([{label:'Inventory item',key:'name'},{label:'Code',key:'code'},{label:'Unit',key:'unit'},{label:'On hand',key:'qty',num:true,render:r=>fmt(r.qty)},{label:'Location',key:'location'}],data,{empty:'Manager.io returned no inventory items.'}),viewError?'Location report unavailable; showing the Inventory Items on-hand list.':'');}catch(e){throw new Error((viewError?'Location report: '+viewError.message+'; ':'')+'Inventory item list: '+e.message)}
 }
-function accountIsProfitAndLoss(ref){const k=mapId(ref);const seen=names.account.has(k);return seen}
+function paymentItemText(value){
+ const out=[];
+ function addOne(v,kind='account',depth=0){
+  if(v===null||v===undefined||v==='')return;
+  if(depth>5)return;
+  if(Array.isArray(v)){for(const x of v)addOne(x,kind,depth+1);return}
+  if(typeof v==='object'){
+   const item=field(v,'inventoryItem','item','inventoryKit');
+   const account=field(v,'account','suspenseAccount','expenseAccount');
+   if(item)addOne(item,'item',depth+1);
+   if(account)addOne(account,'account',depth+1);
+   if(!item&&!account){const direct=rawName(v);if(direct)addOne(direct,kind,depth+1);else{const id=keyOf(v);if(id)addOne(id,kind,depth+1);else for(const [k,x] of Object.entries(v))if(/account|item|line|value|text/i.test(k))addOne(x,kind,depth+1)}}
+   return
+  }
+  const text=String(v).trim();if(!text)return;
+  if(isKey(text)){const name=names[kind]?.get(text)||names.item.get(text)||names.account.get(text);out.push(name||'Name unavailable')}else out.push(text)
+ }
+ addOne(value);return[...new Set(out)].join(' · ')||'—';
+}
 async function loadExpenses(){
- const settled=await Promise.allSettled([getBatch('/api4/payment-batch'),getBatch('/api4/expense-claim-batch')]);const payments=settled[0].status==='fulfilled'?settled[0].value:[];const claims=settled[1].status==='fulfilled'?settled[1].value:[];if(!payments.length&&!claims.length&&settled.every(x=>x.status==='rejected'))throw new Error('Neither payment nor expense-claim records could be loaded: '+settled.map(x=>x.reason?.message||'').join(' · '));const sourceErrors=settled.filter(x=>x.status==='rejected').map(x=>x.reason?.message||'source unavailable');
- const rows=[];
- function addExpense(record,source){const h=itemData(record),date=String(field(h,'date','issueDate')||'').slice(0,10);if(!inRange(date))return;const partyRef=field(h,'payee','paidBy','employee','supplier','contact');for(const ln of linesOf(record)){const acct=field(ln,'account','expenseAccount');if(!acct)continue;const amount=amountFromLine(ln,'purchaseUnitPrice');const account=refName(acct,'account');rows.push({date,account,party:refName(partyRef,'employee')==='Name unavailable'?refName(partyRef,'supplier'):refName(partyRef,'employee'),amount,source})}}
- for(const p of payments)addExpense(p,'Payment');for(const c of claims)addExpense(c,'Expense claim');
- rows.sort((a,b)=>b.date.localeCompare(a.date)||a.account.localeCompare(b.account));return box(reportDefs.expenses.title,renderTable([{label:'Date',key:'date',render:r=>dateText(r.date)},{label:'Expense account',key:'account'},{label:'Payee / party',key:'party'},{label:'Amount',key:'amount',num:true,render:r=>fmt(r.amount)}],rows,{empty:'No payment/expense-claim lines mapped to expense accounts were found.'}),'Only payment and expense-claim lines assigned to an account are shown.'+(sourceErrors.length?' Sources unavailable: '+sourceErrors.join(' · '):''));
+ const payments=await getApi2List('/api2/payments',['Date','PaidFrom','Payee','Accounts','Amount']);
+ const rows=payments.filter(raw=>{const dt=String(field(obj(raw),'Date','date')||'').slice(0,10);return inRange(dt)}).map(raw=>{const r=obj(raw),paidFrom=field(r,'PaidFrom','paidFrom'),accounts=field(r,'Accounts','accounts'),amount=field(r,'Amount','amount','total');return{date:field(r,'Date','date'),paidFrom:refName(paidFrom,'bank'),items:paymentItemText(accounts),amount}}).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ return box(reportDefs.expenses.title,renderTable([
+  {label:'Date',key:'date',render:r=>dateText(r.date)},
+  {label:'Paid from (bank / cash)',key:'paidFrom'},
+  {label:'Item / suspense account',key:'items'},
+  {label:'Total amount',key:'amount',num:true,render:r=>fmt(r.amount)}
+ ],rows,{empty:'No Payments tab entries were returned for the selected preset.'}),'Values are read from the Payments tab: Paid From, Accounts, and Amount (payment total).');
 }
 async function loadOne(id){try{if(id==='cash')return await loadCash();if(id==='customers')return await loadCustomers();if(id==='inventoryMoves')return await loadInventoryMoves();if(id==='inventoryOnHand')return await loadInventoryOnHand();if(id==='expenses')return await loadExpenses()}catch(e){return reportError(reportDefs[id].title,e)}return''}
 async function loadReports(){const selected=[...document.querySelectorAll('#reportMenu input:checked')].map(x=>x.value);if(!selected.length){document.getElementById('reports').innerHTML=showEmpty('Select at least one report.');return}const btn=document.getElementById('loadBtn');btn.disabled=true;btn.textContent='Loading…';document.getElementById('reports').innerHTML=showEmpty('Loading Manager.io data…');setConnection(true,'Connected · loading');try{await loadNameCatalogs();const html=[];for(const id of selected)html.push(await loadOne(id));document.getElementById('reports').innerHTML=html.join('');setConnection(true,'Connected · reports loaded')}catch(e){document.getElementById('reports').innerHTML='<div class="error">'+esc(e.message)+'</div>';setConnection(false,'Load failed')}finally{btn.disabled=false;btn.textContent='Load selected reports'}}
 function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function setRange(kind){const now=new Date(),from=new Date(now),to=new Date(now);if(kind==='yesterday'){from.setDate(from.getDate()-1);to.setDate(to.getDate()-1)}else if(kind==='week'){from.setDate(from.getDate()-(now.getDay()+6)%7)}else if(kind==='month'){from.setDate(1)}else if(kind==='all'){document.getElementById('fromDate').value='';document.getElementById('toDate').value=''}if(kind!=='all'){document.getElementById('fromDate').value=iso(from);document.getElementById('toDate').value=iso(to)}document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.range===kind))}
-const menu=document.getElementById('reportMenu'),drop=document.getElementById('reportDrop');drop.addEventListener('click',()=>{menu.classList.toggle('open');drop.setAttribute('aria-expanded',String(menu.classList.contains('open')))});document.addEventListener('click',e=>{if(!e.target.closest('.report-select'))menu.classList.remove('open')});document.getElementById('selectAll').addEventListener('click',()=>{document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=true);drop.textContent='5 reports selected ▾'});document.getElementById('selectNone').addEventListener('click',()=>{document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=false);drop.textContent='Choose reports ▾'});document.querySelectorAll('#reportMenu input').forEach(x=>x.addEventListener('change',()=>{const n=document.querySelectorAll('#reportMenu input:checked').length;drop.textContent=n?n+' report'+(n===1?'':'s')+' selected ▾':'Choose reports ▾'}));document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>setRange(b.dataset.range)));document.getElementById('clearDates').addEventListener('click',()=>setRange('all'));document.getElementById('loadBtn').addEventListener('click',loadReports);document.getElementById('fromDate').addEventListener('change',()=>document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active')));document.getElementById('toDate').addEventListener('change',()=>document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active')));
+let activeRange='today';
+function rangeBounds(){const today=new Date();today.setHours(0,0,0,0);const from=new Date(today),to=new Date(today);if(activeRange==='yesterday'){from.setDate(from.getDate()-1);to.setDate(to.getDate()-1)}else if(activeRange==='week')from.setDate(from.getDate()-(today.getDay()+6)%7);else if(activeRange==='month')from.setDate(1);return{from:iso(from),to:iso(to)}}
+function setRange(kind){if(!['today','yesterday','week','month'].includes(kind))return;activeRange=kind;document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.range===kind))}
+
+const menu=document.getElementById('reportMenu'),drop=document.getElementById('reportDrop');drop.addEventListener('click',()=>{menu.classList.toggle('open');drop.setAttribute('aria-expanded',String(menu.classList.contains('open')))});document.addEventListener('click',e=>{if(!e.target.closest('.report-select'))menu.classList.remove('open')});document.getElementById('selectAll').addEventListener('click',()=>{document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=true);drop.textContent='5 reports selected ▾'});document.getElementById('selectNone').addEventListener('click',()=>{document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=false);drop.textContent='Choose reports ▾'});document.querySelectorAll('#reportMenu input').forEach(x=>x.addEventListener('change',()=>{const n=document.querySelectorAll('#reportMenu input:checked').length;drop.textContent=n?n+' report'+(n===1?'':'s')+' selected ▾':'Choose reports ▾'}));document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>setRange(b.dataset.range)));document.getElementById('loadBtn').addEventListener('click',loadReports);
 </script>
 </body>
 </html>
