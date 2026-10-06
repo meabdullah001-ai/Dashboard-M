@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none';">
 <meta name="referrer" content="no-referrer">
-<title>Manager.io Multi-Report Dashboard</title>
+<title>Dashboard</title>
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#172033;background:#f5f7fb;--blue:#1769c2;--line:#dce3ed;--muted:#627085;--white:#fff;--green:#16834b;--red:#b42318}
 *{box-sizing:border-box}body{margin:0;padding:18px;min-width:320px}.wrap{max-width:1450px;margin:auto}.top,.panel,.report-card{background:var(--white);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px #182b4510}.top{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.icon{font-size:28px}.title{font-size:21px;font-weight:800}.subtitle,.muted{color:var(--muted);font-size:12px}.status{font-size:12px;padding:6px 10px;border-radius:20px;background:#edf2f8;color:#42526a}.status.ok{background:#e8f6ee;color:var(--green)}.status.bad{background:#fff0ef;color:var(--red)}
@@ -15,18 +15,17 @@
 <body>
 <div class="wrap">
   <section class="panel" id="pinLock" style="max-width:460px;margin:8vh auto 0">
-    <h1 style="margin:0 0 6px;font-size:20px">Manager.io Dashboard</h1>
+    <h1 data-business-title style="margin:0 0 6px;font-size:20px">Dashboard</h1>
     <p class="muted" style="margin:0 0 16px">Enter your access PIN to continue.</p>
     <form id="pinForm" style="display:flex;align-items:end;gap:10px;flex-wrap:wrap">
       <div class="field" style="flex:1;min-width:150px"><label for="pinInput">Access PIN</label><input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required></div>
       <button class="btn primary" type="submit">Unlock</button>
     </form>
     <p class="error hidden" id="pinError" role="alert" style="margin:12px 0 0"></p>
-    <p class="hint">This PIN screen is a client-side convenience lock, not secure Manager.io user permissions. Use Manager.io’s own user permissions for sensitive data.</p>
   </section>
   <div id="dashboardApp" class="hidden">
   <header class="top">
-    <div class="brand"><div class="icon">📊</div><div><div class="title">Manager.io Multi-Report Dashboard</div><div class="subtitle">Multi-report selection · Manager.io date-based reporting</div></div></div>
+    <div class="brand"><div class="icon">📊</div><div><div class="title" data-business-title>Dashboard</div></div></div>
     <span class="status" id="connection">Open this extension inside Manager.io</span>
     <button class="btn" id="lockButton" type="button">Lock</button>
   </header>
@@ -49,10 +48,8 @@
       </div></div>
       <button class="btn primary" id="loadBtn" type="button">Load selected reports</button>
     </div>
-    <div class="hint">The selected preset filters dated transactions. Bank/cash balances are current tab figures; customer balances and inventory on hand are generated as of the selected range end date.</div>
   </section>
   <main class="reports" id="reports"><div class="empty">Select reports and load them from inside Manager.io.</div></main>
-  <div class="foot">Manager.io transaction data is read only. Date-specific inventory and customer report views use temporary report settings that the dashboard creates and removes immediately.</div>
   </div>
 </div>
 <script>
@@ -63,7 +60,7 @@ const ALLOWED=[
  '/api4/goods-receipt-batch','/api4/delivery-note-batch','/api4/inventory-transfer-batch','/api4/inventory-write-off-batch','/api4/purchase-invoice-batch',
  '/api4/inventory-quantity-by-location-view','/api4/inventory-quantity-by-location-batch','/api4/inventory-quantity-summary-view','/api4/inventory-quantity-summary-batch',
  '/api4/inventory-item-batch','/api4/non-inventory-item-batch','/api4/inventory-kit-batch','/api4/custom-inventory-location-batch',
- '/api4/customer-batch','/api4/supplier-batch','/api4/employee-batch','/api4/profit-and-loss-statement-account-batch','/api4/balance-sheet-account-batch','/api4/bank-or-cash-account-batch',
+ '/api4/customer-batch','/api4/supplier-batch','/api4/employee-batch','/api4/profit-and-loss-statement-account-batch','/api4/balance-sheet-account-batch','/api4/bank-or-cash-account-batch','/api4/business-details',
  '/api2/bank-and-cash-accounts',
  '/api4/customer-summary-view','/api4/customer-summary-batch',
  '/api4/bank-or-cash-accounts','/api4/inventory-quantity-by-location','/api4/customer-summary'
@@ -127,6 +124,9 @@ function managerRequest(method,path,payload,timeoutMs=25000){
  });
 }
 function managerGet(path,timeoutMs=25000){return managerRequest('GET',path,undefined,timeoutMs)}
+let businessNamePromise=null;
+function setBusinessTitle(name){const title=(String(name||'').trim()?String(name).trim()+' ':'')+'Dashboard';document.title=title;document.querySelectorAll('[data-business-title]').forEach(el=>{el.textContent=title})}
+async function loadBusinessName(){if(!businessNamePromise)businessNamePromise=(async()=>{try{const details=itemData(await managerGet('/api4/business-details'));setBusinessTitle(field(details,'name','businessName')||'')}catch(_){setBusinessTitle('')}})();return businessNamePromise}
 function listRows(body){if(Array.isArray(body))return body;if(!body||typeof body!=='object')return[];for(const k of ['items','rows','data','results','records','accounts','bankOrCashAccounts','bankAndCashAccounts'])if(Array.isArray(body[k]))return body[k];return[]}
 async function getBatch(endpoint){
  const all=[];let token=null,skip=0;
@@ -177,7 +177,7 @@ function paymentAmount(record){
 }
 function showEmpty(msg){return'<div class="empty">'+esc(msg)+'</div>'}
 function renderTable(headers,rows,opts={}){if(!rows.length)return showEmpty(opts.empty||'No data returned for the selected dates.');const head='<tr>'+headers.map(h=>'<th class="'+(h.num?'num':'')+'">'+esc(h.label)+'</th>').join('')+'</tr>';const body=rows.map(r=>'<tr>'+headers.map(h=>'<td class="'+(h.num?'num':'')+'">'+esc(h.render?h.render(r):(r[h.key]??'—'))+'</td>').join('')+'</tr>').join('');return'<div class="scroll"><table><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'}
-function box(title,inner,note=''){return'<section class="report-card"><div class="report-head"><h2>'+esc(title)+'</h2></div><div class="report-body">'+(note?'<p class="report-note">'+esc(note)+'</p>':'')+inner+'</div></section>'}
+function box(title,inner){return'<section class="report-card"><div class="report-head"><h2>'+esc(title)+'</h2></div><div class="report-body">'+inner+'</div></section>'}
 function reportError(title,e){return box(title,'<div class="error">'+esc(e?.message||e)+'</div>')}
 async function loadNameCatalogs(reportIds){
  const selected=new Set(reportIds),jobs=[];
@@ -212,7 +212,7 @@ async function loadCash(){
  const failures=[];
  const sources=[['/api2/bank-and-cash-accounts?pageSize=99999','Manager.io Bank and Cash Accounts tab'],['/api4/bank-or-cash-accounts','Manager.io API4 account list']];
  for(const [path,label] of sources){
-  try{const records=listRows(await managerGet(path));if(records.length){const hasBalance=records.some(r=>numberValue(field(itemData(r),'actualBalance','ActualBalance','balance','actualBalanceAmount'))!==null);if(hasBalance)return box(reportDefs.cash.title,bankAccountsTable(records),'Actual and cleared balances are read directly from the Manager.io Bank and Cash Accounts tab.');failures.push(label+': rows returned but no ActualBalance field ('+Object.keys(itemData(records[0])).join(', ')+')')}else failures.push(label+': no account rows were returned.')}catch(e){failures.push(label+': '+(e?.message||e))}
+  try{const records=listRows(await managerGet(path));if(records.length){const hasBalance=records.some(r=>numberValue(field(itemData(r),'actualBalance','ActualBalance','balance','actualBalanceAmount'))!==null);if(hasBalance)return box(reportDefs.cash.title,bankAccountsTable(records));failures.push(label+': rows returned but no ActualBalance field ('+Object.keys(itemData(records[0])).join(', ')+')')}else failures.push(label+': no account rows were returned.')}catch(e){failures.push(label+': '+(e?.message||e))}
  }
  throw new Error('Could not read the Bank and Cash Accounts tab directly. '+failures.join(' · '))
 }
@@ -242,7 +242,6 @@ async function loadCustomers(){
  const invoices=settled[0].status==='fulfilled'?settled[0].value:[];
  const receipts=settled[1].status==='fulfilled'?settled[1].value:[];
  const balanceResult=settled[2].status==='fulfilled'?settled[2].value:null;const balanceView=balanceResult?.view||null;
- const errors=settled.filter(x=>x.status==='rejected').map(x=>x.reason?.message||'source unavailable');
  const balances=customerBalancesFromView(balanceView);
  const buckets=new Map();
  function add(ref,date,which,amount){const id=mapId(ref);if(!id)return;const day=date||'';const key=id+'|'+day;let b=buckets.get(key);if(!b){b={date:day,customerRef:ref,customer:customerName(ref),sales:0,receipts:0};buckets.set(key,b)}b[which]+=amount}
@@ -253,14 +252,13 @@ async function loadCustomers(){
  for(const customer of (balances.rows||[])){const exists=[...buckets.values()].some(b=>mapId(b.customerRef)===customer.id||b.customer===customer.name);if(!exists&&customer.name&&customer.name!=='Name unavailable')buckets.set('balance|'+customer.id,{date:'',customerRef:customer.ref,customer:customer.name,sales:0,receipts:0})}
  const hist=new Map();if(!balances.size){for(const inv of invoices){const ref=customerRef(inv),id=mapId(ref);if(id)hist.set(id,(hist.get(id)||0)+invoiceAmount(inv))}for(const rec of receipts){const ref=customerRef(rec),id=mapId(ref);if(id)hist.set(id,(hist.get(id)||0)-receiptAmount(rec))}}
  const rows=[...buckets.values()].map(b=>{const id=mapId(b.customerRef),name=b.customer;const balance=balances.has(id)?balances.get(id):(balances.has(name)?balances.get(name):(hist.has(id)?hist.get(id):null));return{...b,customer:customerName(b.customerRef),balance}}).sort((a,b)=>a.customer.localeCompare(b.customer)||a.date.localeCompare(b.date));
- const note=(balances.size?'Balance is taken from a temporary Manager.io Customer Summary for the selected date range.':'Customer Summary balance is unavailable; fallback is estimated from loaded sales invoices less receipts.')+(balanceResult?.cleanupWarning?' Temporary report cleanup warning: '+balanceResult.cleanupWarning:'')+(errors.length?' Some API4 source(s) unavailable: '+errors.join(' · '):'');
  return box(reportDefs.customers.title,renderTable([
   {label:'Date',key:'date',render:r=>r.date?dateText(r.date):'—'},
   {label:'Customer / Name / Party',key:'customer'},
   {label:'Sales invoices',key:'sales',num:true,render:r=>fmt(r.sales)},
   {label:'Receipts',key:'receipts',num:true,render:r=>fmt(r.receipts)},
   {label:'Balance',key:'balance',num:true,render:r=>r.balance===null?'—':fmt(r.balance)}
- ],rows,{empty:'No customer sales, receipts or balances for the selected preset.'}),note);
+ ],rows,{empty:'No customer sales, receipts or balances for the selected preset.'}));
 }
 function flattenView(view){
  if(!view||typeof view!=='object')return null;
@@ -270,7 +268,7 @@ function flattenView(view){
  const rows=[];function visit(node,parent=''){for(const n of node||[]){const cells=n.cells||[];const values={};leaves.forEach((c,i)=>{const cell=cells[i];const text=cell?.text!==null&&cell?.text!==undefined&&cell.text!==''?cell.text:(cell?.value??'');values[c.name||c.key||('Column '+(i+1))]=typeof text==='object'?(text.text||text.name||text.value||''):text});const label=n.displayName||'';if(cells.length)rows.push({...values,_group:parent||label,_displayName:label,_isTotal:!!n.isTotalRow});if(Array.isArray(n.rows))visit(n.rows,label||parent)}}visit(root);return{columns:leaves,rows};
 }
 function viewTable(view,preferred=[]){const tab=flattenView(view);if(!tab)return'';let cols=tab.columns.map(c=>({key:c.name||c.key,label:c.name||c.key||'Value'}));if(!cols.length&&tab.rows.length)cols=Object.keys(tab.rows[0]).filter(k=>!k.startsWith('_')).map(k=>({key:k,label:k}));if(preferred.length)cols=cols.filter(c=>preferred.some(p=>c.label.toLowerCase().includes(p.toLowerCase())));if(!cols.length)cols=tab.columns.map(c=>({key:c.name||c.key,label:c.name||c.key||'Value'}));return renderTable(cols.map(c=>({label:c.label,key:c.key})),tab.rows.map(r=>Object.fromEntries(cols.map(c=>[c.key,resolveCell(r[c.key])]))))}
-function inventoryViewTable(view){
+function inventoryViewTable(view,role=accessRole){
  const tab=flattenView(view);if(!tab)return'';
  const itemCol=tab.columns.find(c=>/item|product/i.test(String(c.name||c.key||'')));
  const itemKey=itemCol?(itemCol.name||itemCol.key):null;
@@ -283,7 +281,8 @@ function inventoryViewTable(view){
   converted.__resolvedItem=itemName;
   return converted
  });
- const headers=[{label:'Inventory item',key:'__resolvedItem'},...others.map((c,i)=>({label:i===0?'C/S':(c.name||c.key||'Value'),key:c.name||c.key}))];
+ const shownOthers=role==='inventory'?others.slice(0,1):others;
+ const headers=[{label:'Inventory item',key:'__resolvedItem'},...shownOthers.map((c,i)=>({label:i===0?'C/S':(c.name||c.key||'Value'),key:c.name||c.key}))];
  return renderTable(headers,rows);
 }
 
@@ -291,15 +290,14 @@ async function loadInventoryMoves(){
  const specs=[['Goods receipt','/api4/goods-receipt-batch','In'],['Delivery note','/api4/delivery-note-batch','Out'],['Inventory transfer','/api4/inventory-transfer-batch','Transfer'],['Inventory write-off','/api4/inventory-write-off-batch','Out'],['Purchase invoice','/api4/purchase-invoice-batch','In'],['Sales invoice','/api4/sales-invoice-batch','Out'],['Receipt','/api4/receipt-batch','Out']];
  const settled=await Promise.all(specs.map(async([label,path,direction])=>{try{return{label,direction,records:await getBatch(path)}}catch(e){return{label,direction,error:e.message,records:[]}}}));
  const rows=[],errs=[];for(const s of settled){if(s.error){errs.push(s.label+': '+s.error);continue}for(const rec of s.records){const h=itemData(rec),date=dateKey(field(h,'date','issueDate','deliveryDate'));if(!inRange(date))continue;const location=field(h,'inventoryLocation','salesInventoryLocation','location');const from=field(h,'fromInventoryLocation','fromLocation'),to=field(h,'toInventoryLocation','toLocation');for(const ln of linesOf(rec)){const ref=field(ln,'item','inventoryItem','inventoryKit');if(!ref)continue;const qty=numberValue(field(ln,'qty','quantity'));if(qty===null)continue;const customerRefValue=field(h,'customer');const customer=s.label==='Receipt'?'C/S':(s.label==='Sales invoice'?(customerRefValue?refName(customerRefValue,'customer'):'C/S'):'—');rows.push({date,item:refName(ref,'item'),direction:s.direction,qty:Math.abs(qty)*(s.direction==='Out'?-1:1),customer})}}}
- const inner=renderTable([{label:'Date',key:'date',render:r=>dateText(r.date)},{label:'Inventory item',key:'item'},{label:'Movement',key:'direction'},{label:'Quantity',key:'qty',num:true,render:r=>fmt(r.qty)},{label:'Customer',key:'customer'}],rows,{empty:'No inventory movement records were returned for these dates.'})+(errs.length?'<div class="report-note" style="margin-top:8px">Sources unavailable: '+esc(errs.join(' · '))+'</div>':'');return box(reportDefs.inventoryMoves.title,inner,'Movement rows are built from Manager.io transaction records; check whether your workflow uses invoices, goods receipts, or delivery notes so linked steps are not double-counted.');
+ const inner=renderTable([{label:'Date',key:'date',render:r=>dateText(r.date)},{label:'Inventory item',key:'item'},{label:'Movement',key:'direction'},{label:'Quantity',key:'qty',num:true,render:r=>fmt(r.qty)},{label:'Customer',key:'customer'}],rows,{empty:'No inventory movement records were returned for these dates.'});return box(reportDefs.inventoryMoves.title,inner);
 }
 async function loadInventoryOnHand(){
  const target=rangeBounds().to;
  try{const catalog=await getBatch('/api4/inventory-item-batch');indexCatalog(catalog,'item',['itemName','name','nameWithCode','text'])}catch(_){}
  const dated=await temporaryReportView('/api4/inventory-quantity-by-location-view','/api4/inventory-quantity-by-location-batch','/api4/inventory-quantity-by-location',{date:localDateTime(target),description:null,customInventoryLocations:false,inventoryLocations:null,customTheme:false,customThemeId:null});
  const tab=flattenView(dated.view);if(!tab?.rows?.length)throw new Error('Manager.io returned no inventory quantities for '+target+'.');
- const note='Manager.io Inventory Quantity by Location as of '+dateText(target)+'.'+(dated.cleanupWarning?' Temporary report cleanup warning: '+dated.cleanupWarning:'');
- return box(reportDefs.inventoryOnHand.title,inventoryViewTable(dated.view),note)
+ return box(reportDefs.inventoryOnHand.title,inventoryViewTable(dated.view))
 }
 function paymentItemText(value){
  const out=[];
@@ -330,11 +328,11 @@ async function loadExpenses(){
   {label:'Paid from (bank / cash)',key:'paidFrom'},
   {label:'Item / suspense account',key:'items'},
   {label:'Total amount',key:'amount',num:true,render:r=>fmt(r.amount)}
- ],rows,{empty:'No Payments tab entries were returned for the selected preset.'}),'Values are read from Manager.io’s Payments records: paidFrom, line item/account, and the calculated payment total.');
+ ],rows,{empty:'No Payments tab entries were returned for the selected preset.'}));
 }
 function updateReportDrop(){const drop=document.getElementById('reportDrop');if(accessRole==='inventory'){drop.textContent='Inventory on hand & locations';return}const n=document.querySelectorAll('#reportMenu input:checked').length;drop.textContent=n?n+' report'+(n===1?'':'s')+' selected ▾':'Choose reports ▾'}
 function applyAccessRole(role){accessRole=role;accessSession++;const restricted=role==='inventory';document.querySelectorAll('#reportMenu input').forEach(input=>{const allowed=!restricted||input.value==='inventoryOnHand';input.disabled=!allowed;input.closest('label')?.classList.toggle('hidden',!allowed);if(restricted)input.checked=allowed});document.querySelector('.menu-actions')?.classList.toggle('hidden',restricted);const drop=document.getElementById('reportDrop');drop.disabled=restricted;drop.setAttribute('aria-expanded','false');document.getElementById('reportMenu').classList.remove('open');const load=document.getElementById('loadBtn');load.disabled=false;load.textContent=restricted?'Load inventory report':'Load selected reports';updateReportDrop();document.getElementById('dashboardApp').classList.remove('hidden');document.getElementById('pinLock').classList.add('hidden');document.getElementById('reports').innerHTML=showEmpty('Select reports and load them from inside Manager.io.');setConnection(false,restricted?'Unlocked · inventory only':'Unlocked · administrator')}
-function unlockDashboard(event){event.preventDefault();const input=document.getElementById('pinInput'),message=document.getElementById('pinError'),role=PIN_PROFILES[input.value];if(!role){message.textContent='Incorrect PIN. Try again.';message.classList.remove('hidden');input.select();return}message.textContent='';message.classList.add('hidden');input.value='';applyAccessRole(role)}
+function unlockDashboard(event){event.preventDefault();const input=document.getElementById('pinInput'),message=document.getElementById('pinError'),role=PIN_PROFILES[input.value];if(!role){message.textContent='Incorrect PIN. Try again.';message.classList.remove('hidden');input.select();return}message.textContent='';message.classList.add('hidden');input.value='';applyAccessRole(role);void loadBusinessName()}
 function lockDashboard(){accessRole=null;accessSession++;document.getElementById('dashboardApp').classList.add('hidden');document.getElementById('pinLock').classList.remove('hidden');document.getElementById('pinInput').value='';document.getElementById('pinError').textContent='';document.getElementById('pinError').classList.add('hidden');document.getElementById('reports').innerHTML=showEmpty('Select reports and load them from inside Manager.io.');setConnection(false,'Locked');document.getElementById('pinInput').focus()}
 async function loadOne(id){if(!reportIdsForRole(accessRole,[id]).includes(id))return reportError(reportDefs[id]?.title||'Report',new Error('This PIN does not allow access to this report.'));try{if(id==='cash')return await loadCash();if(id==='customers')return await loadCustomers();if(id==='inventoryMoves')return await loadInventoryMoves();if(id==='inventoryOnHand')return await loadInventoryOnHand();if(id==='expenses')return await loadExpenses()}catch(e){return reportError(reportDefs[id].title,e)}return''}
 async function loadReports(){if(!accessRole){document.getElementById('reports').innerHTML=showEmpty('Enter a PIN before loading reports.');return}const session=accessSession,checked=[...document.querySelectorAll('#reportMenu input:checked')].map(x=>x.value),selected=reportIdsForRole(accessRole,checked);if(!selected.length){document.getElementById('reports').innerHTML=showEmpty('Select at least one report.');return}const btn=document.getElementById('loadBtn');btn.disabled=true;btn.textContent='Loading…';document.getElementById('reports').innerHTML=showEmpty('Loading Manager.io data…');setConnection(true,'Connected · loading');try{await loadNameCatalogs(selected);if(session!==accessSession)return;const html=[];for(const id of selected){const rendered=await loadOne(id);if(session!==accessSession)return;html.push(rendered)}document.getElementById('reports').innerHTML=html.join('');setConnection(true,'Connected · reports loaded')}catch(e){if(session===accessSession){document.getElementById('reports').innerHTML='<div class="error">'+esc(e.message)+'</div>';setConnection(false,'Load failed')}}finally{if(session===accessSession){btn.disabled=false;btn.textContent=accessRole==='inventory'?'Load inventory report':'Load selected reports'}}}
