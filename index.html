@@ -52,7 +52,7 @@ const ALLOWED=[
  '/api4/inventory-item-batch','/api4/non-inventory-item-batch','/api4/inventory-kit-batch','/api4/custom-inventory-location-batch',
  '/api4/customer-batch','/api4/supplier-batch','/api4/employee-batch','/api4/profit-and-loss-statement-account-batch','/api4/balance-sheet-account-batch','/api4/bank-or-cash-account-batch',
  '/api4/bank-account-summary-view','/api4/bank-account-summary-batch','/api4/customer-summary-view','/api4/customer-summary-batch',
- '/api4/bank-or-cash-accounts','/api4/inventory-quantity-by-location','/api4/customer-summary'
+ '/api4/bank-or-cash-accounts','/api4/inventory-quantity-by-location','/api4/customer-summary','/api4/bank-account-summary'
 ];
 let managerOrigin=null;
 const PAGE_SIZE=99999;
@@ -146,7 +146,7 @@ function convertedTotal(record,total){const x=itemData(record),rate=numberValue(
 function invoiceAmount(record){const h=itemData(record),ls=linesOf(record);if(field(h,'fixedTotal')===true){const fixed=numberValue(field(h,'fixedTotalAmount','invoiceAmount','totalAmount'));if(fixed!==null)return convertedTotal(record,fixed)}if(!ls.length)return convertedTotal(record,numberValue(field(h,'invoiceAmount','totalAmount','total','amount','fixedTotalAmount'))||0);return convertedTotal(record,ls.reduce((s,l)=>s+amountFromLine(l,'salesUnitPrice'),0))}
 function receiptAmount(record){
  const h=itemData(record);
- if(field(h,'fixedTotal')===true){const fixed=numberValue(field(h,'fixedTotalAmount'));if(fixed!==null)return convertedTotal(record,fixed)}
+ if(field(h,'fixedTotal')===true){const fixed=numberValue(field(h,'fixedTotalAmount'));if(fixed!==null&&fixed!==0)return convertedTotal(record,fixed)}
  const ls=linesOf(record);let total=ls.reduce((sum,line)=>sum+amountFromLine(line,'salesUnitPrice'),0);
  if(!total)total=numberValue(field(h,'balancingAmount','fixedTotalAmount','totalAmount','total','amount'))||0;
  return convertedTotal(record,total)
@@ -187,9 +187,11 @@ function bankSummaryTable(view){
  const tab=flattenView(view);if(!tab)return showEmpty('Manager.io returned no bank balance report.');
  const accountCol=tab.columns.find(c=>/bank|cash|account/i.test(String(c.name||c.key||'')));
  const accountKey=accountCol?(accountCol.name||accountCol.key):null;
- const valueCols=tab.columns.filter(c=>!accountCol||c!==accountCol);
- const rows=tab.rows.map(r=>{const raw=(accountKey&&r[accountKey]!==undefined&&r[accountKey]!=='')?r[accountKey]:(r._group||r._displayName||'');const account=raw?refName(raw,'bank'):'Name unavailable';const row={...r,__account:account};for(const c of valueCols){const k=c.name||c.key;row[k]=resolveCell(r[k])}return row});
- const headers=[{label:'Bank / cash account',key:'__account'},...valueCols.map(c=>({label:c.name||c.key||'Balance',key:c.name||c.key}))];
+ const allValueCols=tab.columns.filter(c=>!accountCol||c!==accountCol);
+ const balanceCols=allValueCols.filter(c=>/balance|actual/i.test(String(c.name||c.key||'')));
+ const valueCols=balanceCols.length?[balanceCols.find(c=>/closing|actual|ending/i.test(String(c.name||c.key||'')))||balanceCols[balanceCols.length-1]]:allValueCols;
+ const rows=tab.rows.map(r=>{const raw=(accountKey&&r[accountKey]!==undefined&&r[accountKey]!=='')?r[accountKey]:(r._group||r._displayName||'');const account=raw?refName(raw,'bank'):'Name unavailable';return{...r,__account:account}});
+ const headers=[{label:'Bank / cash account',key:'__account'},...valueCols.map(c=>({label:c.name||c.key||'Balance',key:c.name||c.key,render:r=>{const n=numberValue(r[c.name||c.key]);return n===null?resolveCell(r[c.name||c.key]):fmt(n)}}))];
  return renderTable(headers,rows,{empty:'The Bank Account Summary view returned no account balances.'});
 }
 function customerBalancesFromView(view){
@@ -208,17 +210,33 @@ function bankAccountsTable(records){
  return renderTable([{label:'Bank / cash account',key:'name'},{label:'Actual balance',key:'actual',num:true,render:r=>fmt(r.actual)},{label:'Cleared balance',key:'cleared',num:true,render:r=>fmt(r.cleared)},{label:'Pending deposits',key:'deposits',num:true,render:r=>fmt(r.deposits)},{label:'Pending withdrawals',key:'withdrawals',num:true,render:r=>fmt(r.withdrawals)}],rows,{empty:'Manager.io returned no bank/cash account rows.'})
 }
 async function loadCash(){
- let listError=null;
+ let listError=null,summaryError=null,savedError=null;
  try{const accounts=listRows(await managerGet('/api4/bank-or-cash-accounts'));if(accounts.length)return box(reportDefs.cash.title,bankAccountsTable(accounts),'Balances are read directly from Manager.io’s Bank and Cash Accounts list.')}catch(e){listError=e}
- let viewError=null;
- try{const view=await getReportView('/api4/bank-account-summary-view','/api4/bank-account-summary-batch');if(view&&flattenView(view)?.rows?.length)return box(reportDefs.cash.title,bankSummaryTable(view),'Fallback: Manager.io Bank Account Summary report.')}catch(e){viewError=e}
- throw new Error('Could not load Manager.io Bank and Cash Accounts. '+(listError?'Account list: '+listError.message+'; ':'')+(viewError?'Summary fallback: '+viewError.message:'No account rows were returned.'))
+ try{
+  const today=iso(new Date()),dated=await temporaryReportView('/api4/bank-account-summary-view','/api4/bank-account-summary-batch','/api4/bank-account-summary',{bankAccount:null,periods:[{fromDate:localDateTime('1900-01-01'),toDate:localDateTime(today)}],accountCodes:false,excludeZeroBalances:false,customTheme:false,customThemeId:null});
+  if(flattenView(dated.view)?.rows?.length)return box(reportDefs.cash.title,bankSummaryTable(dated.view),'Fallback: Manager.io Bank Account Summary through '+dateText(today)+'.'+(dated.cleanupWarning?' Temporary report cleanup warning: '+dated.cleanupWarning:''));
+  summaryError=new Error('The temporary Bank Account Summary returned no rows.')
+ }catch(e){summaryError=e}
+ try{const view=await getReportView('/api4/bank-account-summary-view','/api4/bank-account-summary-batch');if(view&&flattenView(view)?.rows?.length)return box(reportDefs.cash.title,bankSummaryTable(view),'Fallback: existing Manager.io Bank Account Summary report.')}catch(e){savedError=e}
+ throw new Error('Could not load Manager.io Bank and Cash Accounts. '+(listError?'Account list: '+listError.message+'; ':'')+(summaryError?'dated summary: '+summaryError.message+'; ':'')+(savedError?'saved summary: '+savedError.message:'No account rows were returned.'))
 }
 function customerRef(record){const x=itemData(record);return field(x,'customer','customerName','accountsReceivableCustomer','contact')||field(record,'customer')||null}
 function mapId(ref){const raw=rawName(ref);return keyOf(ref)||raw}
+function receiptCustomerAllocations(record,invoiceCustomerByKey){
+ const h=itemData(record),headerCustomer=field(h,'customer','customerName')||field(record,'customer');
+ if(headerCustomer)return[[headerCustomer,receiptAmount(record)]];
+ const allocations=new Map();
+ for(const line of linesOf(record)){
+  let ref=field(line,'accountsReceivableCustomer','billableExpenseCustomer');
+  if(!ref){const invoiceRef=field(line,'accountsReceivableSalesInvoice','billableExpenseSalesInvoice');const invoiceKey=keyOf(invoiceRef)||rawName(invoiceRef);if(invoiceKey)ref=invoiceCustomerByKey.get(String(invoiceKey))||invoiceCustomerByKey.get(String(invoiceKey).toLowerCase())}
+  if(!ref)continue;const id=String(mapId(ref));if(!id)continue;const amount=amountFromLine(line,'salesUnitPrice');const existing=allocations.get(id);if(existing)existing.amount+=amount;else allocations.set(id,{ref,amount})
+ }
+ if(allocations.size===1){const one=[...allocations.values()][0];if(!one.amount)one.amount=receiptAmount(record)}
+ return[...allocations.values()].map(x=>[x.ref,x.amount])
+}
 function customerName(ref){const d=rawName(ref);if(d&&!isKey(d))return d;const k=mapId(ref);return names.customer.get(k)||names.customer.get(String(k).toLowerCase())||(k&&!isKey(k)?k:'Name unavailable')}
 function balanceField(record){return numberValue(field(record,'AccountsReceivable','accountsReceivable','balance','balanceDue','customerBalance'))}
-function dateOf(record){const x=itemData(record);return String(field(x,'issueDate','date','transactionDate','deliveryDate')||'').slice(0,10)}
+function dateOf(record){const x=itemData(record);return dateKey(field(x,'issueDate','date','transactionDate','deliveryDate'))}
 async function loadCustomers(){
  const settled=await Promise.allSettled([
   getBatch('/api4/sales-invoice-batch'),
@@ -232,8 +250,10 @@ async function loadCustomers(){
  const balances=customerBalancesFromView(balanceView);
  const buckets=new Map();
  function add(ref,date,which,amount){const id=mapId(ref);if(!id)return;const day=date||'';const key=id+'|'+day;let b=buckets.get(key);if(!b){b={date:day,customerRef:ref,customer:customerName(ref),sales:0,receipts:0};buckets.set(key,b)}b[which]+=amount}
+ const invoiceCustomerByKey=new Map();
+ for(const inv of invoices){const ref=customerRef(inv),key=keyOf(inv)||keyOf(itemData(inv));if(ref&&key){invoiceCustomerByKey.set(String(key),ref);invoiceCustomerByKey.set(String(key).toLowerCase(),ref)}}
  for(const inv of invoices){const dt=dateOf(inv);if(!inRange(dt))continue;const ref=customerRef(inv);if(!ref)continue;const amount=invoiceAmount(inv);if(amount!==null)add(ref,dt,'sales',amount)}
- for(const rec of receipts){const dt=dateOf(rec);if(!inRange(dt))continue;const ref=customerRef(rec);if(!ref)continue;const amount=receiptAmount(rec);if(amount!==null)add(ref,dt,'receipts',amount)}
+ for(const rec of receipts){const dt=dateOf(rec);if(!inRange(dt))continue;for(const [ref,amount] of receiptCustomerAllocations(rec,invoiceCustomerByKey)){if(amount!==null)add(ref,dt,'receipts',amount)}}
  for(const customer of (balances.rows||[])){const exists=[...buckets.values()].some(b=>mapId(b.customerRef)===customer.id||b.customer===customer.name);if(!exists&&customer.name&&customer.name!=='Name unavailable')buckets.set('balance|'+customer.id,{date:'',customerRef:customer.ref,customer:customer.name,sales:0,receipts:0})}
  const hist=new Map();if(!balances.size){for(const inv of invoices){const ref=customerRef(inv),id=mapId(ref);if(id)hist.set(id,(hist.get(id)||0)+invoiceAmount(inv))}for(const rec of receipts){const ref=customerRef(rec),id=mapId(ref);if(id)hist.set(id,(hist.get(id)||0)-receiptAmount(rec))}}
  const rows=[...buckets.values()].map(b=>{const id=mapId(b.customerRef),name=b.customer;const balance=balances.has(id)?balances.get(id):(balances.has(name)?balances.get(name):(hist.has(id)?hist.get(id):null));return{...b,customer:customerName(b.customerRef),balance}}).sort((a,b)=>a.customer.localeCompare(b.customer)||a.date.localeCompare(b.date));
