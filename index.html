@@ -14,9 +14,21 @@
 </head>
 <body>
 <div class="wrap">
+  <section class="panel" id="pinLock" style="max-width:460px;margin:8vh auto 0">
+    <h1 style="margin:0 0 6px;font-size:20px">Manager.io Dashboard</h1>
+    <p class="muted" style="margin:0 0 16px">Enter your access PIN to continue.</p>
+    <form id="pinForm" style="display:flex;align-items:end;gap:10px;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:150px"><label for="pinInput">Access PIN</label><input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required></div>
+      <button class="btn primary" type="submit">Unlock</button>
+    </form>
+    <p class="error hidden" id="pinError" role="alert" style="margin:12px 0 0"></p>
+    <p class="hint">This PIN screen is a client-side convenience lock, not secure Manager.io user permissions. Use Manager.io’s own user permissions for sensitive data.</p>
+  </section>
+  <div id="dashboardApp" class="hidden">
   <header class="top">
     <div class="brand"><div class="icon">📊</div><div><div class="title">Manager.io Multi-Report Dashboard</div><div class="subtitle">Multi-report selection · Manager.io date-based reporting</div></div></div>
     <span class="status" id="connection">Open this extension inside Manager.io</span>
+    <button class="btn" id="lockButton" type="button">Lock</button>
   </header>
   <section class="panel">
     <div class="controls">
@@ -41,6 +53,7 @@
   </section>
   <main class="reports" id="reports"><div class="empty">Select reports and load them from inside Manager.io.</div></main>
   <div class="foot">Manager.io transaction data is read only. Date-specific inventory and customer report views use temporary report settings that the dashboard creates and removes immediately.</div>
+  </div>
 </div>
 <script>
 'use strict';
@@ -65,6 +78,9 @@ const reportDefs={
  inventoryOnHand:{title:'Inventory on hand & locations'},
  expenses:{title:'Expenses'}
 };
+const PIN_PROFILES=Object.freeze({'4321':'admin','0000':'inventory'});
+let accessRole=null,accessSession=0;
+function reportIdsForRole(role,selected=[]){if(role==='inventory')return['inventoryOnHand'];if(role==='admin')return selected.filter(id=>Object.prototype.hasOwnProperty.call(reportDefs,id));return[]}
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function obj(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}
 function itemData(record){const r=obj(record);return obj(r.item||r.data||r)}
@@ -163,19 +179,12 @@ function showEmpty(msg){return'<div class="empty">'+esc(msg)+'</div>'}
 function renderTable(headers,rows,opts={}){if(!rows.length)return showEmpty(opts.empty||'No data returned for the selected dates.');const head='<tr>'+headers.map(h=>'<th class="'+(h.num?'num':'')+'">'+esc(h.label)+'</th>').join('')+'</tr>';const body=rows.map(r=>'<tr>'+headers.map(h=>'<td class="'+(h.num?'num':'')+'">'+esc(h.render?h.render(r):(r[h.key]??'—'))+'</td>').join('')+'</tr>').join('');return'<div class="scroll"><table><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'}
 function box(title,inner,note=''){return'<section class="report-card"><div class="report-head"><h2>'+esc(title)+'</h2></div><div class="report-body">'+(note?'<p class="report-note">'+esc(note)+'</p>':'')+inner+'</div></section>'}
 function reportError(title,e){return box(title,'<div class="error">'+esc(e?.message||e)+'</div>')}
-async function loadNameCatalogs(){
- const jobs=[
-  ['/api4/customer-batch','customer',['name','nameWithCode','text']],
-  ['/api4/supplier-batch','supplier',['name','nameWithCode','text']],
-  ['/api4/employee-batch','employee',['name','nameWithCode','text']],
-  ['/api4/inventory-item-batch','item',['itemName','name','nameWithCode']],
-  ['/api4/non-inventory-item-batch','item',['name','itemName','nameWithCode']],
-  ['/api4/inventory-kit-batch','item',['name','itemName','nameWithCode']],
-  ['/api4/custom-inventory-location-batch','location',['name','nameWithCode','text']],
-  ['/api4/profit-and-loss-statement-account-batch','account',['name','nameWithCode','text']],
-  ['/api4/balance-sheet-account-batch','account',['name','nameWithCode','text']],
-  ['/api4/bank-or-cash-account-batch','bank',['name','nameWithCode','text']]
- ];
+async function loadNameCatalogs(reportIds){
+ const selected=new Set(reportIds),jobs=[];
+ if(selected.has('customers'))jobs.push(['/api4/customer-batch','customer',['name','nameWithCode','text']]);
+ if(selected.has('inventoryMoves'))jobs.push(['/api4/customer-batch','customer',['name','nameWithCode','text']],['/api4/inventory-item-batch','item',['itemName','name','nameWithCode']]);
+ if(selected.has('inventoryOnHand'))jobs.push(['/api4/custom-inventory-location-batch','location',['name','nameWithCode','text']]);
+ if(selected.has('expenses'))jobs.push(['/api4/inventory-item-batch','item',['itemName','name','nameWithCode']],['/api4/non-inventory-item-batch','item',['name','itemName','nameWithCode']],['/api4/inventory-kit-batch','item',['name','itemName','nameWithCode']],['/api4/profit-and-loss-statement-account-batch','account',['name','nameWithCode','text']],['/api4/balance-sheet-account-batch','account',['name','nameWithCode','text']],['/api4/bank-or-cash-account-batch','bank',['name','nameWithCode','text']]);
  await Promise.all(jobs.map(async([path,kind,fields])=>{try{const list=await getBatch(path);indexCatalog(list,kind,fields)}catch(_){/* optional catalog: report still renders without leaking raw keys */}}));
 }
 async function getReportView(viewPath,batchPath){
@@ -196,8 +205,8 @@ function customerBalancesFromView(view){
 }
 
 function bankAccountsTable(records){
- const rows=(records||[]).map(rec=>{const h=itemData(rec);const raw=field(h,'name','nameWithCode','accountName','bankAccountName','cashAccountName','text','uniqueName')||field(rec,'name','nameWithCode','accountName','bankAccountName','cashAccountName','text');const name=raw?refName(raw,'bank'):'Name unavailable';return{name,actual:field(h,'actualBalance','ActualBalance','balance','actualBalanceAmount'),cleared:field(h,'clearedBalance','ClearedBalance','clearedBalanceAmount'),deposits:field(h,'pendingDeposits','PendingDeposits'),withdrawals:field(h,'pendingWithdrawals','PendingWithdrawals')}});
- return renderTable([{label:'Bank / cash account',key:'name'},{label:'Actual balance',key:'actual',num:true,render:r=>fmt(r.actual)},{label:'Cleared balance',key:'cleared',num:true,render:r=>fmt(r.cleared)},{label:'Pending deposits',key:'deposits',num:true,render:r=>fmt(r.deposits)},{label:'Pending withdrawals',key:'withdrawals',num:true,render:r=>fmt(r.withdrawals)}],rows,{empty:'Manager.io returned no bank/cash account rows.'})
+ const rows=(records||[]).map(rec=>{const h=itemData(rec);const raw=field(h,'name','nameWithCode','accountName','bankAccountName','cashAccountName','text','uniqueName')||field(rec,'name','nameWithCode','accountName','bankAccountName','cashAccountName','text');const name=raw?refName(raw,'bank'):'Name unavailable';return{name,actual:field(h,'actualBalance','ActualBalance','balance','actualBalanceAmount')}});
+ return renderTable([{label:'Bank / cash account',key:'name'},{label:'Actual balance',key:'actual',num:true,render:r=>fmt(r.actual)}],rows,{empty:'Manager.io returned no bank/cash account rows.'})
 }
 async function loadCash(){
  const failures=[];
@@ -266,7 +275,7 @@ function inventoryViewTable(view){
  const itemCol=tab.columns.find(c=>/item|product/i.test(String(c.name||c.key||'')));
  const itemKey=itemCol?(itemCol.name||itemCol.key):null;
  const others=tab.columns.filter(c=>!itemCol||c!==itemCol);
- const rows=tab.rows.map(r=>{
+ const rows=tab.rows.filter(r=>!r._isTotal).map(r=>{
   const converted={...r};
   for(const c of tab.columns){const key=c.name||c.key;const val=r[key];if(/location/i.test(String(c.name||c.key||'')))converted[key]=typeof val==='string'&&isKey(val)?refName(val,'location'):resolveCell(val);else converted[key]=resolveCell(val)}
   const raw=(itemKey&&r[itemKey]!==undefined&&r[itemKey]!=='')?r[itemKey]:(r._group||r._displayName||Object.values(r).find(v=>typeof v==='string'&&isKey(v)&&names.item.has(v)));
@@ -274,7 +283,7 @@ function inventoryViewTable(view){
   converted.__resolvedItem=itemName;
   return converted
  });
- const headers=[{label:'Inventory item',key:'__resolvedItem'},...others.map(c=>({label:c.name||c.key||'Value',key:c.name||c.key}))];
+ const headers=[{label:'Inventory item',key:'__resolvedItem'},...others.map((c,i)=>({label:i===0?'C/S':(c.name||c.key||'Value'),key:c.name||c.key}))];
  return renderTable(headers,rows);
 }
 
@@ -323,14 +332,18 @@ async function loadExpenses(){
   {label:'Total amount',key:'amount',num:true,render:r=>fmt(r.amount)}
  ],rows,{empty:'No Payments tab entries were returned for the selected preset.'}),'Values are read from Manager.io’s Payments records: paidFrom, line item/account, and the calculated payment total.');
 }
-async function loadOne(id){try{if(id==='cash')return await loadCash();if(id==='customers')return await loadCustomers();if(id==='inventoryMoves')return await loadInventoryMoves();if(id==='inventoryOnHand')return await loadInventoryOnHand();if(id==='expenses')return await loadExpenses()}catch(e){return reportError(reportDefs[id].title,e)}return''}
-async function loadReports(){const selected=[...document.querySelectorAll('#reportMenu input:checked')].map(x=>x.value);if(!selected.length){document.getElementById('reports').innerHTML=showEmpty('Select at least one report.');return}const btn=document.getElementById('loadBtn');btn.disabled=true;btn.textContent='Loading…';document.getElementById('reports').innerHTML=showEmpty('Loading Manager.io data…');setConnection(true,'Connected · loading');try{await loadNameCatalogs();const html=[];for(const id of selected)html.push(await loadOne(id));document.getElementById('reports').innerHTML=html.join('');setConnection(true,'Connected · reports loaded')}catch(e){document.getElementById('reports').innerHTML='<div class="error">'+esc(e.message)+'</div>';setConnection(false,'Load failed')}finally{btn.disabled=false;btn.textContent='Load selected reports'}}
+function updateReportDrop(){const drop=document.getElementById('reportDrop');if(accessRole==='inventory'){drop.textContent='Inventory on hand & locations';return}const n=document.querySelectorAll('#reportMenu input:checked').length;drop.textContent=n?n+' report'+(n===1?'':'s')+' selected ▾':'Choose reports ▾'}
+function applyAccessRole(role){accessRole=role;accessSession++;const restricted=role==='inventory';document.querySelectorAll('#reportMenu input').forEach(input=>{const allowed=!restricted||input.value==='inventoryOnHand';input.disabled=!allowed;input.closest('label')?.classList.toggle('hidden',!allowed);if(restricted)input.checked=allowed});document.querySelector('.menu-actions')?.classList.toggle('hidden',restricted);const drop=document.getElementById('reportDrop');drop.disabled=restricted;drop.setAttribute('aria-expanded','false');document.getElementById('reportMenu').classList.remove('open');const load=document.getElementById('loadBtn');load.disabled=false;load.textContent=restricted?'Load inventory report':'Load selected reports';updateReportDrop();document.getElementById('dashboardApp').classList.remove('hidden');document.getElementById('pinLock').classList.add('hidden');document.getElementById('reports').innerHTML=showEmpty('Select reports and load them from inside Manager.io.');setConnection(false,restricted?'Unlocked · inventory only':'Unlocked · administrator')}
+function unlockDashboard(event){event.preventDefault();const input=document.getElementById('pinInput'),message=document.getElementById('pinError'),role=PIN_PROFILES[input.value];if(!role){message.textContent='Incorrect PIN. Try again.';message.classList.remove('hidden');input.select();return}message.textContent='';message.classList.add('hidden');input.value='';applyAccessRole(role)}
+function lockDashboard(){accessRole=null;accessSession++;document.getElementById('dashboardApp').classList.add('hidden');document.getElementById('pinLock').classList.remove('hidden');document.getElementById('pinInput').value='';document.getElementById('pinError').textContent='';document.getElementById('pinError').classList.add('hidden');document.getElementById('reports').innerHTML=showEmpty('Select reports and load them from inside Manager.io.');setConnection(false,'Locked');document.getElementById('pinInput').focus()}
+async function loadOne(id){if(!reportIdsForRole(accessRole,[id]).includes(id))return reportError(reportDefs[id]?.title||'Report',new Error('This PIN does not allow access to this report.'));try{if(id==='cash')return await loadCash();if(id==='customers')return await loadCustomers();if(id==='inventoryMoves')return await loadInventoryMoves();if(id==='inventoryOnHand')return await loadInventoryOnHand();if(id==='expenses')return await loadExpenses()}catch(e){return reportError(reportDefs[id].title,e)}return''}
+async function loadReports(){if(!accessRole){document.getElementById('reports').innerHTML=showEmpty('Enter a PIN before loading reports.');return}const session=accessSession,checked=[...document.querySelectorAll('#reportMenu input:checked')].map(x=>x.value),selected=reportIdsForRole(accessRole,checked);if(!selected.length){document.getElementById('reports').innerHTML=showEmpty('Select at least one report.');return}const btn=document.getElementById('loadBtn');btn.disabled=true;btn.textContent='Loading…';document.getElementById('reports').innerHTML=showEmpty('Loading Manager.io data…');setConnection(true,'Connected · loading');try{await loadNameCatalogs(selected);if(session!==accessSession)return;const html=[];for(const id of selected){const rendered=await loadOne(id);if(session!==accessSession)return;html.push(rendered)}document.getElementById('reports').innerHTML=html.join('');setConnection(true,'Connected · reports loaded')}catch(e){if(session===accessSession){document.getElementById('reports').innerHTML='<div class="error">'+esc(e.message)+'</div>';setConnection(false,'Load failed')}}finally{if(session===accessSession){btn.disabled=false;btn.textContent=accessRole==='inventory'?'Load inventory report':'Load selected reports'}}}
 function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 let activeRange='today';
 function rangeBounds(){const today=new Date();today.setHours(0,0,0,0);const from=new Date(today),to=new Date(today);if(activeRange==='yesterday'){from.setDate(from.getDate()-1);to.setDate(to.getDate()-1)}else if(activeRange==='week')from.setDate(from.getDate()-(today.getDay()+6)%7);else if(activeRange==='month')from.setDate(1);return{from:iso(from),to:iso(to)}}
 function setRange(kind){if(!['today','yesterday','week','month'].includes(kind))return;activeRange=kind;document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.range===kind))}
 
-const menu=document.getElementById('reportMenu'),drop=document.getElementById('reportDrop');drop.addEventListener('click',()=>{menu.classList.toggle('open');drop.setAttribute('aria-expanded',String(menu.classList.contains('open')))});document.addEventListener('click',e=>{if(!e.target.closest('.report-select'))menu.classList.remove('open')});document.getElementById('selectAll').addEventListener('click',()=>{document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=true);drop.textContent='5 reports selected ▾'});document.getElementById('selectNone').addEventListener('click',()=>{document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=false);drop.textContent='Choose reports ▾'});document.querySelectorAll('#reportMenu input').forEach(x=>x.addEventListener('change',()=>{const n=document.querySelectorAll('#reportMenu input:checked').length;drop.textContent=n?n+' report'+(n===1?'':'s')+' selected ▾':'Choose reports ▾'}));document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>setRange(b.dataset.range)));document.getElementById('loadBtn').addEventListener('click',loadReports);
+const menu=document.getElementById('reportMenu'),drop=document.getElementById('reportDrop');drop.addEventListener('click',()=>{if(drop.disabled)return;menu.classList.toggle('open');drop.setAttribute('aria-expanded',String(menu.classList.contains('open')))});document.addEventListener('click',e=>{if(!e.target.closest('.report-select'))menu.classList.remove('open')});document.getElementById('selectAll').addEventListener('click',()=>{if(accessRole!=='admin')return;document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=true);updateReportDrop()});document.getElementById('selectNone').addEventListener('click',()=>{if(accessRole!=='admin')return;document.querySelectorAll('#reportMenu input').forEach(x=>x.checked=false);updateReportDrop()});document.querySelectorAll('#reportMenu input').forEach(x=>x.addEventListener('change',updateReportDrop));document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>setRange(b.dataset.range)));document.getElementById('loadBtn').addEventListener('click',loadReports);document.getElementById('pinForm').addEventListener('submit',unlockDashboard);document.getElementById('lockButton').addEventListener('click',lockDashboard);
 </script>
 </body>
 </html>
