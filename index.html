@@ -209,16 +209,34 @@ function bankAccountsTable(records){
  const rows=(records||[]).map(rec=>{const h=itemData(rec);const raw=field(h,'name','nameWithCode','accountName','bankAccountName','cashAccountName','text','uniqueName')||field(rec,'name','nameWithCode','accountName','bankAccountName','cashAccountName','text');const name=raw?refName(raw,'bank'):'Name unavailable';return{name,actual:field(h,'actualBalance','ActualBalance','balance','actualBalanceAmount'),cleared:field(h,'clearedBalance','ClearedBalance','clearedBalanceAmount'),deposits:field(h,'pendingDeposits','PendingDeposits'),withdrawals:field(h,'pendingWithdrawals','PendingWithdrawals')}});
  return renderTable([{label:'Bank / cash account',key:'name'},{label:'Actual balance',key:'actual',num:true,render:r=>fmt(r.actual)},{label:'Cleared balance',key:'cleared',num:true,render:r=>fmt(r.cleared)},{label:'Pending deposits',key:'deposits',num:true,render:r=>fmt(r.deposits)},{label:'Pending withdrawals',key:'withdrawals',num:true,render:r=>fmt(r.withdrawals)}],rows,{empty:'Manager.io returned no bank/cash account rows.'})
 }
+function bankBalanceFromView(view){
+ const tab=flattenView(view);if(!tab)return null;
+ const balances=tab.columns.filter(c=>/balance|actual/i.test(String(c.name||c.key||'')));
+ const col=balances.find(c=>/closing|ending|actual/i.test(String(c.name||c.key||'')))||balances[balances.length-1];
+ if(!col)return null;const key=col.name||col.key;
+ for(let i=tab.rows.length-1;i>=0;i--){const row=tab.rows[i];if(row._isTotal)continue;const n=numberValue(row[key]);if(n!==null)return n}
+ const leaves=tab.columns,idx=leaves.findIndex(c=>(c.name||c.key)===key),totals=view?.rows?.totalCells||view?.rows?.rows?.totalCells;
+ if(idx>=0&&Array.isArray(totals)){const n=numberValue(totals[idx]?.value??totals[idx]?.text);if(n!==null)return n}
+ return null
+}
+function bankBalancesTable(rows){return renderTable([{label:'Bank / cash account',key:'account'},{label:'Actual balance',key:'balance',num:true,render:r=>fmt(r.balance)}],rows,{empty:'Manager.io returned no account balances.'})}
 async function loadCash(){
- let listError=null,summaryError=null,savedError=null;
+ let listError=null,batchError=null,reportErrors=[],cleanupWarnings=[];
  try{const accounts=listRows(await managerGet('/api4/bank-or-cash-accounts'));if(accounts.length)return box(reportDefs.cash.title,bankAccountsTable(accounts),'Balances are read directly from Manager.io’s Bank and Cash Accounts list.')}catch(e){listError=e}
  try{
-  const today=iso(new Date()),dated=await temporaryReportView('/api4/bank-account-summary-view','/api4/bank-account-summary-batch','/api4/bank-account-summary',{bankAccount:null,periods:[{fromDate:localDateTime('1900-01-01'),toDate:localDateTime(today)}],accountCodes:false,excludeZeroBalances:false,customTheme:false,customThemeId:null});
-  if(flattenView(dated.view)?.rows?.length)return box(reportDefs.cash.title,bankSummaryTable(dated.view),'Fallback: Manager.io Bank Account Summary through '+dateText(today)+'.'+(dated.cleanupWarning?' Temporary report cleanup warning: '+dated.cleanupWarning:''));
-  summaryError=new Error('The temporary Bank Account Summary returned no rows.')
- }catch(e){summaryError=e}
+  const accounts=await getBatch('/api4/bank-or-cash-account-batch'),today=iso(new Date()),rows=[];
+  for(const account of accounts){const data=itemData(account),key=keyOf(account)||keyOf(data);if(!key)continue;
+   const raw=field(data,'name','nameWithCode','text','uniqueName')||rawName(account),name=raw?refName(raw,'bank'):'Name unavailable';
+   try{const result=await temporaryReportView('/api4/bank-account-summary-view','/api4/bank-account-summary-batch','/api4/bank-account-summary',{bankAccount:key,periods:[{fromDate:localDateTime('1900-01-01'),toDate:localDateTime(today)}],accountCodes:false,excludeZeroBalances:false,customTheme:false,customThemeId:null});
+    const balance=bankBalanceFromView(result.view);if(balance!==null)rows.push({account:name,balance});else reportErrors.push(name+': summary view had no balance rows');if(result.cleanupWarning)cleanupWarnings.push(name+': '+result.cleanupWarning)
+   }catch(e){reportErrors.push(name+': '+(e?.message||e))}
+  }
+  if(rows.length)return box(reportDefs.cash.title,bankBalancesTable(rows),'Balances are read from a temporary Bank Account Summary for each account through '+dateText(today)+'.'+(cleanupWarnings.length?' Cleanup warning: '+cleanupWarnings.join(' · '):''));
+  if(!accounts.length)batchError=new Error('The Bank or Cash Account batch returned no accounts.');else batchError=new Error(reportErrors.join(' · ')||'No account balance rows were returned by Bank Account Summary.')
+ }catch(e){batchError=e}
+ let savedError=null;
  try{const view=await getReportView('/api4/bank-account-summary-view','/api4/bank-account-summary-batch');if(view&&flattenView(view)?.rows?.length)return box(reportDefs.cash.title,bankSummaryTable(view),'Fallback: existing Manager.io Bank Account Summary report.')}catch(e){savedError=e}
- throw new Error('Could not load Manager.io Bank and Cash Accounts. '+(listError?'Account list: '+listError.message+'; ':'')+(summaryError?'dated summary: '+summaryError.message+'; ':'')+(savedError?'saved summary: '+savedError.message:'No account rows were returned.'))
+ throw new Error('Could not load Manager.io Bank and Cash Accounts. '+(listError?'Account list: '+listError.message+'; ':'')+(batchError?'account batch/summary: '+batchError.message+'; ':'')+(savedError?'saved summary: '+savedError.message:'No account rows were returned.'))
 }
 function customerRef(record){const x=itemData(record);return field(x,'customer','customerName','accountsReceivableCustomer','contact')||field(record,'customer')||null}
 function mapId(ref){const raw=rawName(ref);return keyOf(ref)||raw}
